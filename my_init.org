@@ -1,0 +1,3112 @@
+# -*- mode: org; coding: utf-8 -*-
+#+TITLE: Emacs Packages Initialization
+#+AUTHOR: Paul Jorgensen
+#+EMAIL: paul@prjorgensen.com
+#+LANGUAGE: en
+#+Time-stamp: <2017-07-24 04:26:05 Paul>
+#+INFOJS_OPT: view:showall toc:t ltoc:t mouse:underline path:http://orgmode.org/org-info.js
+#+HTML_HEAD: <link rel="stylesheet" type="text/css" href="../css/notebook.css" />
+#+LATEX_HEADER: \usepackage{lmodern}
+#+LATEX_HEADER: \usepackage[T1]{fontenc}
+#+OPTIONS: toc:nil num:0
+#+OPTIONS: H:2 num:nil toc:nil \n:nil @:t ::t |:t ^:nil
+#+STARTUP: hideblocks
+#+CREATOR: 
+#+DESCRIPTION: My emacs initialization file
+#+SELECT_TAGS: export
+#+EXCLUDE_TAGS: noexport
+#+KEYWORDS: literate programming, reproducible research, programming language, lisp, elisp, ide, emacs, babel, org-mode
+
+* OS
+
+** Windows 10
+
+*** TODO [[http://www.msys2.org/][MSYS2 homepage]]
+
+
+   Preparing a Windows box for the best Emacs experience is a bit of a journey.
+
+   Here is how I do it. I will eventually make this a PowerShell script to automate as much as possible.
+
+*** HOME, PATH, and other environment variables
+
+    I make my %HOME% directory equal to %USERPROFILE%. Hit the Windows key and type “environment”, which should bring up the option for Environment Variables.
+
+    I add %HOME%/bin and %HOME%/wbin to the PATH at the end.
+
+    I change %TMP% to point to %HOME%/tmp
+
+*** Emacs
+
+    I get the standard Gnu Emacs and extract it to %HOME%, which will automatically crate several of the directories mentioned in the next section
+
+*** Directories
+
+    I make a bin, etc, libexec, share, tmp, var, and wbin directores.
+
+    - bin: binaries. In addition to Emacs binaries I place other *nix like tools in here, such as ispell
+    - etc: configuration files
+    - libexec: libraries
+    - share: documentation and examples
+    - tmp: temporary files
+    - var: variable files like IO
+    - wbin: windows binaries like SysInternals
+    - .emacs.d: Emacs configuration
+
+*** Tools & Utilities
+
+**** GPG4Win
+
+Need this for handling encrypted files like .authinfo.gpg and secret.org.gpg.
+
+**** GIMP
+
+Some graphics libraries Emacs looks for are included in GIMP for Win32.
+
+**** 7-zip
+
+
+
+**** Github
+
+All the git commands I need are included in the command line bits. Please make sure you select them for install.
+
+**** Textexpander
+
+I use Textexpander to keep my general use keyboard shortcuts in sync between Mac & Windows and in all apps. Anything Emacs specific I keep in the common abbrev file or in my_init.org.
+
+**** Other tools
+
+***** Mingw32
+
+** macOS (OS X)
+
+   There are several customizations in here for Mac. I like what Aquamacs is doing on Mac, though it crashed on me regularly. I liberally crib from their customizations for my Mac config.
+
+   I used Mac Ports version of emacs-app. Mac Ports requires XCode and the command line utilities.
+
+   Make sure GPG is installed via MacGPG. change the setting for the executable to enable encrypting and decrypting automatically.
+
+   Disable brain-dead C-space input source switching capability in macOS Preferences - Keyboard - Shortcuts - Inpiut Sources.
+
+   Make sure to set up Keyboard Maestro to apply Opt-¥ to the _ key: (JIS Underscore) to simulate (⌥ JIS Yen)
+
+This is a test
+
+
+* Init
+
+Here are the header bits
+
+#+NAME: header
+#+BEGIN_SRC emacs-lisp :tangle yes
+;;; -*- mode: emacs-lisp; coding: utf-8 -*-
+;;; Title: my_init.el --- Where the magic begins
+;;; Author: Paul R. Jorgensen
+;;; Email: paul@prjorgensen.com
+;;; Version: 1.0
+;;; Time-stamp: <2017-07-08 20:18:32 paulj>
+;;; Purpose: Set up my emacs environment
+
+#+END_SRC
+
+Speed up start
+
+#+BEGIN_SRC emacs-lisp :tangle yes
+(add-hook 'after-init-hook (lambda () (setq gc-cons-threshold 800000)))
+#+END_SRC
+
+From here, let's time how long it takes Emacs to launch so we can tweak & optimize.
+
+#+BEGIN_SRC emacs-lisp :tangle yes
+(defconst emacs-start-time (current-time))
+(unless noninteractive
+  (message "Loading %s..." load-file-name))
+#+END_SRC
+
+Set up debugging, activating on keystroke but otherwise disabled
+
+#+BEGIN_SRC emacs-lisp :tangle yes
+  (setq
+   debug-on-error     nil
+   debug-on-signal    nil
+   debug-on-quit      nil
+   )
+
+  ;;; http://www.youtube.com/watch?v=RvPFZL6NJNQ
+  (global-set-key (kbd "C-c C-d")
+                  (lambda () (interactive)
+                    (setq debug-on-error (if debug-on-error nil t))
+                    (message (format "debug-on-error : %s" debug-on-error))
+                    )
+                  )
+#+END_SRC
+
+Set the coding to UTF-8 here to make sure everything after has it set.
+Do this in as many ways as possible here to make sure it's reflected
+properly everywhere.
+
+#+BEGIN_SRC emacs-lisp :tangle yes
+(setq
+ coding-system-for-read                  'utf-8
+ coding-system-for-write                 'utf-8
+)
+(prefer-coding-system                    'utf-8)
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp :tangle yes
+(setq dotfiles-dir (file-name-directory
+                    (or
+                     (buffer-file-name)
+                     load-file-name)
+                    )
+      )
+
+#+END_SRC
+
+from http://emacsblog.org/2008/12/06/quick-tip-detaching-the-custom-file/
+from https://github.com/technomancy/emacs-starter-kit/blob/master/init.el
+Separate custom file for each host, placed in .emacs.d
+
+#+BEGIN_SRC emacs-lisp :tangle yes
+(setq custom-file (concat user-emacs-directory (car (split-string (system-name) "\\.")) ".el"))
+(load custom-file 'noerror)
+#+END_SRC
+
+Make interface tweaks
+
+#+NAME: tool-bar-mode
+#+BEGIN_SRC emacs-lisp :tangle yes
+(when (functionp 'tool-bar-mode)
+  (tool-bar-mode -1)
+  )
+#+END_SRC
+
+#+NAME: scroll-bar-mode
+#+BEGIN_SRC emacs-lisp :tangle yes
+(when (function 'scroll-bar-mode)
+  (scroll-bar-mode -1)
+  )
+#+END_SRC
+
+#+NAME: menu-bar-mode
+#+BEGIN_SRC emacs-lisp :tangle no
+  (when (function 'menu-bar-mode)
+    (menu-bar-mode -1)
+    )
+#+END_SRC
+
+Turn on the I-bar cursor and disable blinking
+
+#+BEGIN_SRC emacs-lisp :tangle yes
+(modify-all-frames-parameters (list (cons 'cursor-type 'bar)))
+(when (functionp 'blink-cursor-mode)
+  (blink-cursor-mode -1)
+  )
+#+END_SRC
+
+Get some column and row numbering
+
+#+BEGIN_SRC emacs-lisp :tangle yes
+(line-number-mode   1)
+(column-number-mode 1)
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp :tangle yes
+(setq
+ initial-scratch-message ""
+ inhibit-startup-message t
+ ;;;
+ ;;; Don't let Emacs hurt your ears or eyes
+ ;;;
+ visible-bell nil
+ ring-bell-function (lambda ()
+                      (unless (memq this-command
+                                    '(isearch-abort
+                                      mwheel-scroll
+                                      abort-recursive-edit
+                                      exit-minibuffer
+                                      keyboard-quit
+                                      previous-line
+                                      next-line
+                                      scroll-down
+                                      scroll-up
+                                      cua-scroll-down
+                                      cua-scroll-up))
+                        (invert-face 'mode-line)
+                        (run-with-timer 0.05 nil 'invert-face 'mode-line))
+                      )
+
+ ;;;
+ ;;; You need to set `inhibit-startup-echo-area-message' from the
+ ;;; customization interface:
+ ;;; M-x customize-variable RET inhibit-startup-echo-area-message RET
+ ;;; then enter your username
+ ;;;
+ inhibit-startup-echo-area-message user-login-name
+ initial-major-mode 'org-mode
+ )
+#+END_SRC
+
+** yes-or-no
+
+[[http://pragmaticemacs.com/emacs/make-all-prompts-y-or-n/][Make all prompts y or n | Pragmatic Emacs]]
+
+#+begin_quote
+Emacs prompts you at various times to answer yes or no to something. If you add the following to your emacs config file, you will only have to hit y or n saving you countless seconds!
+
+This basically aliases the built in “yes or no” prompt function to the built in “y or n” prompt function so that the latter is always used.
+#+end_quote
+
+#+NAME:
+#+begin_src emacs-lisp :tangle yes
+;; change all prompts to y or n
+(fset 'yes-or-no-p 'y-or-n-p)
+#+end_src
+
+** authentication & encryption
+
+#+NAME: auth-source
+#+begin_src emacs-lisp :tangle yes
+(use-package auth-source
+  :defer t
+  :config
+  (setq
+   auth-sources '(
+                  ;; default
+                  ;; "secrets:session"
+                  ;; "secrets:Login"
+                  "~/.authinfo.gpg"
+                  "~/.authinfo"
+                  "~/.netrc"
+                  )
+   epa-file-cache-passphrase-for-symmetric-encryption t
+   auth-source-debug 'trivia
+   )
+  )
+#+end_src
+
+
+** error handling
+
+#+NAME:
+#+begin_src emacs-lisp :tangle yes
+(defun ignore-error-wrapper (fn)
+  "Funtion return new function that ignore errors.
+   The function wraps a function with `ignore-errors' macro."
+  (lexical-let ((fn fn))
+    (lambda ()
+      (interactive)
+      (ignore-errors
+        (funcall fn)))))
+#+end_src
+
+* package system
+
+#+NAME: prefer newer packages than their elc counterparts
+#+BEGIN_SRC emacs-lisp :tangle yes
+(setq
+ load-prefer-newer t
+ )
+#+END_SRC
+
+#+NAME: package.el
+#+BEGIN_SRC emacs-lisp :tangle yes
+(require 'package)
+
+(add-to-list 'package-archives '("org"          . "http://orgmode.org/elpa/") t)
+(add-to-list 'package-archives '("melpa-stable" . "http://stable.melpa.org/packages/") t)
+(add-to-list 'package-archives '("gnu"          . "http://elpa.gnu.org/packages/"))
+(add-to-list 'package-archives '("melpa"        . "http://melpa.org/packages/") t)
+(add-to-list 'package-archives '("marmalade"    . "https://marmalade-repo.org/packages/") t)
+
+(when (boundp 'package-pinned-packages)
+  (setq package-pinned-packages
+        '(
+          ;; (dash             . "melpa-stable")
+          ;; (package+         . "melpa-stable")
+          ;; (paradox          . "melpa-stable")
+          (org              . "org")
+          ;; (org-plus-contrib . "org")
+          (use-package      . "melpa")
+          )
+        )
+  )
+(setq package-check-signature nil)
+(package-initialize)                ;; Initialize & Install Package
+#+END_SRC
+
+#+NAME: Common LISP
+#+BEGIN_SRC emacs-lisp :tangle yes
+(require 'cl)
+(require 'cl-lib)
+#+END_SRC
+
+add ~/.emacs.d/elisp and all subdirectories to the load path for downloaded packages
+
+#+NAME: edit load path to add elisp/
+#+BEGIN_SRC emacs-lisp :tangle yes
+(add-to-list 'load-path (concat dotfiles-dir "elisp/"))
+(let ((default-directory (concat dotfiles-dir "elisp/"))
+      (normal-top-level-add-to-load-path '("."))
+      (normal-top-level-add-subdirs-to-load-path)
+      )
+  )
+
+(unless package-archive-contents    ;; Refresh the packages descriptions
+  (package-refresh-contents))
+(setq package-load-list '(all))     ;; List of packages to load
+#+END_SRC
+
+Bootstrap `use-package'
+
+#+NAME: use-package
+#+BEGIN_SRC emacs-lisp :tangle yes
+;; (package-refresh-contents)
+(unless (package-installed-p 'use-package)
+  (package-install 'use-package)
+  )
+(eval-when-compile
+  (require 'use-package))
+#+END_SRC
+
+#+NAME: configure use-package
+#+BEGIN_SRC emacs-lisp :tangle yes
+(setq
+ use-package-verbose t
+ )
+#+END_SRC
+
+Bootstrap diminish
+
+#+NAME: diminish
+#+BEGIN_SRC emacs-lisp :tangle yes
+;;; Bootstrap `diminish'
+(unless (package-installed-p 'diminish)
+  (package-install 'diminish)
+  )
+(eval-when-compile
+  (require 'diminish))
+#+END_SRC
+
+Bootstrap bind-key
+
+#+BEGIN_SRC emacs-lisp :tangle yes
+;;; Bootstrap `bind-key'
+(unless (package-installed-p 'bind-key)
+  (package-install 'bind-key)
+  )
+(eval-when-compile
+  (require 'bind-key))
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp :tangle yes
+(setq use-package-verbose t)
+#+END_SRC
+
+* paradox                                                :private:keybinding:
+
+#+NAME: async
+#+begin_src emacs-lisp :tangle yes
+(use-package async
+  :ensure t
+  :defer t
+)
+#+end_src
+
+#+NAME: paradox
+#+BEGIN_SRC emacs-lisp :tangle yes
+(use-package paradox
+  :ensure t
+  :defer t
+  :config
+  (setq
+   paradox-execute-asynchronously t
+   )
+  (paradox-enable)
+  :bind
+  ("H-p"   . paradox-list-packages)
+  ("C-c p" . paradox-list-packages)
+  )
+#+END_SRC
+
+* ergoemacs                                             :keybinding:disabled:
+
+#+NAME: ergoemacs-layout-jp-SP4-en
+#+begin_src emacs-lisp :tangle no
+(defvar ergoemacs-layout-jp-SP4-en
+  '("" "" "1" "2" "3" "4" "5" "6" "7" "8" "9" "0" "-" "^" "¥"
+    "" ""  "q" "w" "e" "r" "t" "y" "u" "i" "o" "p" "@" "[" ""
+    "" ""  "a" "s" "d" "f" "g" "h" "j" "k" "l" ";" ":" "]" ""
+    "" ""  "z" "x" "c" "v" "b" "n" "m" "," "." "/" "\\" "" ""
+    ;; Shifted
+    "" "" "!" "\"" "#" "$" "%" "&" "\'" "(" ")" "0" "=" "~" "|"
+    "" ""  "Q" "W" "E" "R" "T" "Y" "U" "I" "O" "P" "`" "{" ""
+    "" ""  "A" "S" "D" "F" "G" "H" "J" "K" "L" "+" "*" "}" ""
+    "" ""  "Z" "X" "C" "V" "B" "N" "M" "<" ">" "?" "_" "" "")
+  "JP English/Romaji QWERTY SP4 Keyboard")
+#+end_src
+
+#+NAME: ergoemacs-layout-jp-mba-en
+#+begin_src emacs-lisp :tangle no
+(defvar ergoemacs-layout-jp-mba-en
+  '("" "" "1" "2" "3" "4" "5" "6" "7" "8" "9" "0" "-" "^" "¥"
+    "" ""  "q" "w" "e" "r" "t" "y" "u" "i" "o" "p" "@" "[" ""
+    "" ""  "a" "s" "d" "f" "g" "h" "j" "k" "l" ";" ":" "]" ""
+    "" ""  "z" "x" "c" "v" "b" "n" "m" "," "." "/" "_" "" ""
+    ;; Shifted
+    "" "" "!" "\"" "#" "$" "%" "&" "\'" "(" ")" "0" "=" "~" "|"
+    "" ""  "Q" "W" "E" "R" "T" "Y" "U" "I" "O" "P" "`" "{" ""
+    "" ""  "A" "S" "D" "F" "G" "H" "J" "K" "L" "+" "*" "}" ""
+    "" ""  "Z" "X" "C" "V" "B" "N" "M" "<" ">" "?" "_" "" "")
+  "JP English/Romaji QWERTY MacBook Air Keyboard")
+#+end_src
+
+#+NAME: ergoemacs-mode
+#+begin_src emacs-lisp :tangle no
+  (use-package ergoemacs-mode
+    :ensure t
+    ;; :init
+    ;; (defvar ergoemacs-layout-jp-mac-en
+    ;;   '("" "" "1" "2" "3" "4" "5" "6" "7" "8" "9" "0" "-" "^" "¥"
+    ;;     "" ""  "q" "w" "e" "r" "t" "y" "u" "i" "o" "p" "@" "[" ""
+    ;;     "" ""  "a" "s" "d" "f" "g" "h" "j" "k" "l" ";" ":" "]" ""
+    ;;     "" ""  "z" "x" "c" "v" "b" "n" "m" "," "." "/" "\\" "" ""
+    ;;     ;; Shifted
+    ;;     "" "" "!" "\"" "#" "$" "%" "&" "\'" "(" ")" "0" "=" "~" "|"
+    ;;     "" ""  "Q" "W" "E" "R" "T" "Y" "U" "I" "O" "P" "`" "{" ""
+    ;;     "" ""  "A" "S" "D" "F" "G" "H" "J" "K" "L" "+" "*" "}" ""
+    ;;     "" ""  "Z" "X" "C" "V" "B" "N" "M" "<" ">" "?" "_" "" "")
+    ;;   "JP English/Romaji QWERTY Mac Keyboard")
+    :config
+    (setq
+     ergoemacs-theme                  nil  ;; Uses Standard Ergoemacs keyboard theme
+     ergoemacs-keyboard-layout        "jp-SP4-en" ;; Assumes QWERTY keyboard layout
+     ergoemacs-ctrl-c-or-ctrl-x-delay 1
+     )
+    )
+
+#+end_src
+  
+#+NAME: F16-19 key translation maps
+#+begin_src emacs-lisp :tangle no
+;; (define-key key-translation-map (kbd "A-h") 'event-apply-hyper-modifier)
+;; (define-key key-translation-map (kbd "<f19>") 'event-apply-meta-modifier)
+;; (define-key key-translation-map (kbd "<f18>") 'event-apply-control-modifier)
+;; (define-key key-translation-map (kbd "<f17>") 'event-apply-alt-modifier)
+;; (define-key key-translation-map (kbd "<f16>") 'event-apply-super-modifier)
+
+;;; f21 - f24 don't work
+;;; f13 is set for <menu>
+;;; f14 - f15 change screen brightness for some reason
+;;; f20 should work but triggers set-mark-command
+;;; <app> triggers print functions
+
+#+end_src
+
+* keyboard
+
+#+NAME: w32 keys
+#+begin_src emacs-lisp :tangle no
+(setq
+ w32-pass-rwindow-to-system nil
+ w32-pass-apps-to-system nil
+ w32-rwindow-modifier 'alt ; Right Windows key
+ w32-lwindows-modifier 'super
+ w32-apps-modifier 'hyper
+ )
+#+end_src
+
+#+NAME: menu key mapping for ~Hyper~ & Hydra
+#+begin_src emacs-lisp :tangle yes
+;; on Linux, the menu/apps key syntax is <menu>
+;; on Windows, the menu/apps key syntax is <apps>
+;; make the syntax equal
+;; (define-key key-translation-map (kbd "<apps>") (kbd "<menu>"))
+;; (define-key key-translation-map (kbd "<apps>") 'event-apply-hyper-modifier)
+;; (define-key key-translation-map (kbd "<menu>") 'event-apply-hyper-modifier)
+(define-key key-translation-map (kbd "<apps>") (kbd "<menu>"))
+(define-key key-translation-map (kbd "<fn>") (kbd "<menu>"))
+
+(progn
+  ;; define set of key sequences
+  (define-prefix-command 'my-leader-key-map)
+
+  (define-key my-leader-key-map (kbd "RET") 'execute-extended-command)
+  (define-key my-leader-key-map (kbd "<menu>") 'exchange-point-and-mark)
+  (define-key my-leader-key-map (kbd "<f12>") 'org-capture)
+
+  (define-key my-leader-key-map (kbd "'") 'quoted-insert)
+  ;; (define-key my-leader-key-map (kbd "=") 'balance-windows)
+  (define-key my-leader-key-map (kbd "2") 'delete-window)
+  (define-key my-leader-key-map (kbd "3") 'delete-other-windows)
+  (define-key my-leader-key-map (kbd "4") 'split-window-below)
+  (define-key my-leader-key-map (kbd "5") 'split-window-right)
+
+  (define-key my-leader-key-map (kbd "7") 'dired-jump)
+  (define-key my-leader-key-map (kbd "9") 'ispell-word)
+
+  (define-key my-leader-key-map (kbd "a") 'mark-whole-buffer)
+  (define-key my-leader-key-map (kbd "b") 'end-of-buffer)
+  (define-key my-leader-key-map (kbd "c") 'xah-copy-line-or-region)
+
+  (define-key my-leader-key-map (kbd "d") 'beginning-of-buffer)
+  (define-key my-leader-key-map (kbd "g") 'isearch-forward)
+
+  (define-key my-leader-key-map (kbd "k") 'eval-buffer)
+  (define-key my-leader-key-map (kbd "l") 'recenter-top-bottom)
+  (define-key my-leader-key-map (kbd "m") 'universal-argument)
+  (define-key my-leader-key-map (kbd "o") 'hydra-org2blog)
+  (define-key my-leader-key-map (kbd "p") 'paradox-list-packages)
+  (define-key my-leader-key-map (kbd "v") 'xah-paste-or-paste-previous)
+  ;; (define-key my-leader-key-map (kbd "w") 'ace-window)
+  (define-key my-leader-key-map (kbd "x") 'xah-cut-line-or-region)
+  (define-key my-leader-key-map (kbd ";") 'comment-dwim)
+  ;; (define-key my-leader-key-map (kbd "¥") ')
+  )
+
+;; make the menu key as leader key
+(global-set-key (kbd "<menu>") 'my-leader-key-map)
+#+end_src
+
+** hydra
+
+#+NAME: package_hydra
+#+begin_src emacs-lisp :tangle yes
+(use-package hydra
+  :ensure t
+  :config
+  (setq
+   hydra-is-helpful t
+   )
+  )
+#+end_src
+
+#+NAME: package_hydra_examples
+#+begin_src emacs-lisp :tangle yes
+(use-package hydra-examples
+)
+#+end_src
+
+#+NAME: hydra-org-template
+#+begin_src emacs-lisp :tangle yes
+  (defhydra hydra-org-template (:color blue :hint nil)
+    "
+   _c_enter  _q_uote     _e_macs-lisp    _L_aTeX:
+   _l_atex   _E_xample   _p_erl          _i_ndex:
+   _a_scii   _v_erse     _P_erl tangled  _I_NCLUDE:
+   _s_rc     _n_ote      plant_u_ml      _H_TML:
+   _h_tml    ^ ^         ^ ^             _A_SCII:
+  "
+      ("s" (hot-expand "<s"))
+      ("E" (hot-expand "<E"))
+      ("q" (hot-expand "<q"))
+      ("v" (hot-expand "<v"))
+      ("n" (hot-expand "<not"))
+      ("c" (hot-expand "<c"))
+      ("l" (hot-expand "<l"))
+      ("h" (hot-expand "<h"))
+      ("a" (hot-expand "<a"))
+      ("L" (hot-expand "<L"))
+      ("i" (hot-expand "<i"))
+      ("e" (hot-expand "<e")) ; "<s" "emacs-lisp :tangle yes"))
+      ("p" (hot-expand "<s" "perl"))
+      ("u" (hot-expand "<s" "plantuml :file CHANGE.png"))
+      ("P" (hot-expand "<s" "perl" ":results output :exports both :shebang \"#!/usr/bin/env perl\"\n"))
+      ("I" (hot-expand "<I"))
+      ("H" (hot-expand "<H"))
+      ("A" (hot-expand "<A"))
+      ("<" self-insert-command "ins")
+      ("o" nil "quit")
+      ("/" hydra-org-template/body "hint")
+      )
+#+END_SRC
+
+#+NAME: hydra-org-hot-expand
+#+begin_src emacs-lisp :tangle yes
+(defun hot-expand (str &optional mod header)
+  "Expand org template.
+
+  STR is a structure template string recognised by org like <s. MOD is a
+  string with additional parameters to add the begin line of the
+  structure element. HEADER string includes more parameters that are
+  prepended to the element after the #+HEADERS: tag."
+  (let (text)
+    (when (region-active-p)
+      (setq text (buffer-substring (region-beginning) (region-end)))
+      (delete-region (region-beginning) (region-end))
+      (deactivate-mark))
+    (when header (insert "#+HEADERS: " header))
+    (insert str)
+    (org-try-structure-completion)
+    (when mod (insert mod) (forward-line))
+    (when text (insert text))))
+#+end_src
+
+#+NAME: hydra-org-hot-expand-define-key
+#+begin_src emacs-lisp :tangle yes
+  (define-key org-mode-map "<"
+    (lambda () (interactive)
+      (if (or (region-active-p) (looking-back "^"))
+          (hydra-org-template/body)
+        (self-insert-command 1))))
+
+  (eval-after-load "org"
+    '(cl-pushnew
+      '("not" "#+BEGIN_NOTES\n?\n#+END_NOTES")
+      org-structure-template-alist))
+#+end_src
+
+#+NAME: hydra_font_size
+#+begin_src emacs-lisp :tangle no
+(defhydra hydra-font-size (global-map "<f9>")
+  "text-scale"
+  ("<up>" text-scale-increase "larger")
+  ("<down>" text-scale-decrease "smaller")
+  ("/" hydra-font-size/body "hint")
+  )
+#+end_src
+
+#+NAME: hydra-window-management
+#+begin_src emacs-lisp :tangle no
+(defhydra hydra-window (global-map "<f9> w"
+                                   :color red
+                                   )
+  "
+ Split: _v_ert _x_:horz _=_balance
+Delete: _o_nly  _da_ce  _dw_indow  _db_uffer  _df_rame
+  Move: _s_wap
+Frames: _f_rame new  _df_ delete
+  Misc: _m_ark _a_ce  _u_ndo  _r_edo"
+  ("h" windmove-left)
+  ("j" windmove-down)
+  ("k" windmove-up)
+  ("l" windmove-right)
+  ("H" hydra-move-splitter-left)
+  ("J" hydra-move-splitter-down)
+  ("K" hydra-move-splitter-up)
+  ("L" hydra-move-splitter-right)
+  ("|" (lambda ()
+         (interactive)
+         (split-window-right)
+         (windmove-right)))
+  ("_" (lambda ()
+         (interactive)
+         (split-window-below)
+         (windmove-down)))
+  ("v" split-window-right)
+  ("x" split-window-below)
+  ("=" balance-windows)
+                                        ;("t" transpose-frame "'")
+  ("u" winner-undo)
+  ("r" winner-redo) ;;Fixme, not working?
+  ("o" delete-other-windows :exit t)
+  ("a" ace-window :exit t)
+  ("f" new-frame :exit t)
+  ("s" ace-swap-window)
+  ("da" ace-delete-window)
+  ("dw" delete-window)
+  ("db" kill-this-buffer)
+  ("df" delete-frame :exit t)
+  ("q" nil)
+                                        ;("i" ace-maximize-window "ace-one" :color blue)
+                                        ;("b" ido-switch-buffer "buf")
+  ("m" headlong-bookmark-jump)
+  ("/" hydra-window/body "hint")
+  )
+
+;;(key-chord-define-global "yy" 'hydra-window/body)
+#+end_src
+
+#+NAME: hydra-org
+#+begin_src emacs-lisp :tangle no
+(defhydra hydra-org (:color red :hint nil)
+  "
+Navigation^
+---------------------------------------------------------
+_j_ next heading
+_k_ prev heading
+_h_ next heading (same level)
+_l_ prev heading (same level)
+_u_p higher heading
+_g_o to
+"
+  ("j" outline-next-visible-heading)
+  ("k" outline-previous-visible-heading)
+  ("h" org-forward-heading-same-level)
+  ("l" org-backward-heading-same-level)
+  ("u" outline-up-heading)
+  ("g" org-goto :exit t))
+#+end_src
+
+Reference : http://oremacs.com/2015/03/07/hydra-org-templates/
+
+#+NAME: File menu
+#+begin_src emacs-lisp :tangle no
+(defhydra hydra-file (global-map "<f9> f")
+  "File"
+  ("f" isearch-forward)          ; Find
+  ("n" xah-new-empty-buffer)     ; New
+  ("N" make-frame-command)       ; New Window
+  ("o" ido-find-file)            ; Open
+  ("s" save-buffer)              ; Save
+  ("S" write-file)               ; Save As
+  ("w" kill-this-buffer)         ; Close
+  ("F" xah-copy-file-path)       ; copy file path
+  ("d" xah-delete-current-file)
+  ("D" xah-delete-current-file-make-backup)
+  )
+#+end_src
+
+#+NAME: Edit menu
+#+begin_src emacs-lisp :tangle no
+(defhydra hydra-file (global-map "<f9> e")
+  "Edit"
+  ("a" mark-whole-buffer) ; Select All
+  ("x" xah-cut-line-or-region)   ; cut
+  ("c" xah-copy-line-or-region)  ; copy
+  ("v" yank)                     ; Paste
+  ("y" redo)                     ; Redo
+  ("z" undo)                     ; Undo
+  )
+#+end_src
+
+#+NAME: hydra-twittering
+#+begin_src emacs-lisp :tangle no
+(defhydra hydra-twittering (:color blue :hint nil)
+  "
+                                                                    ╭────────────┐
+     Tweets                User                        Timeline     │ Twittering │
+  ╭─────────────────────────────────────────────────────────────────┴────────────╯
+    _k_  [_t_] post tweet      _p_  [_f_] follow                  ^_g_^      [_u_] update
+    ^↑^  [_X_] delete tweet    ^↑^  [_F_] unfollow              ^_S-SPC_^    [_._] new
+    ^ ^  [_r_] retweet         ^ ^  [_d_] direct message          ^^↑^^      [^@^] current user
+    ^↓^  [_R_] retweet & edit  ^↓^  [_i_] profile (browser)   _h_ ←   → _l_  [_a_] toggle
+    _j_  [_b_] favorite        _n_   ^ ^                          ^^↓^^
+    ^ ^  [_B_] unfavorite      ^ ^   ^ ^                         ^_SPC_^
+    ^ ^  [_RET_] reply         ^ ^   ^ ^                          ^_G_^
+    ^ ^  [_T_] show Thread
+    ^ ^  [_y_] yank url          Items                     Do
+    ^ ^  [_Y_] yank tweet     ╭───────────────────────────────────────────────────────
+    ^ ^  [_e_] edit mode        _<backtab>_ ← _o_pen → _<tab>_    [_q_] exit
+    ^ ^   ^ ^                   ^         ^   ^ ^      ^     ^    [_/_] search
+  --------------------------------------------------------------------------------
+       "
+  ("\\" hydra-master/body "back")
+  ("<ESC>" nil "quit")
+  ("q"          twittering-kill-buffer)
+  ("e"          twittering-edit-mode)
+  ("j"          twittering-goto-next-status :color red)
+  ("k"          twittering-goto-previous-status :color red)
+  ("h"          twittering-switch-to-next-timeline :color red)
+  ("l"          twittering-switch-to-previous-timeline :color red)
+  ("g"          beginning-of-buffer)
+  ("G"          end-of-buffer)
+  ("t"          twittering-update-status-interactive)
+  ("X"          twittering-delete-status)
+  ("RET"        twittering-reply-to-user)
+  ("r"          twittering-native-retweet)
+  ("R"          twittering-organic-retweet)
+  ("d"          twittering-direct-message)
+  ("u"          twittering-current-timeline)
+  ("b"          twittering-favorite)
+  ("B"          twittering-unfavorite)
+  ("f"          twittering-follow)
+  ("F"          twittering-unfollow)
+  ("i"          twittering-view-user-page)
+  ("/"          twittering-search)
+  ("."          twittering-visit-timeline)
+  ("@"          twittering-other-user-timeline)
+  ("T"          twittering-toggle-or-retrieve-replied-statuses)
+  ("o"          twittering-click)
+  ("<tab>"        twittering-goto-next-thing :color red)
+  ("<backtab>"  twittering-goto-previous-thing :color red)
+  ("n"          twittering-goto-next-status-of-user :color red)
+  ("p"          twittering-goto-previous-status-of-user :color red)
+  ("SPC"        twittering-scroll-up :color red)
+  ("S-SPC"      twittering-scroll-down :color red)
+  ("y"          twittering-push-uri-onto-kill-ring)
+  ("Y"          twittering-push-tweet-onto-kill-ring)
+  ("a"          twittering-toggle-activate-buffer)
+  )
+#+end_src
+
+#+NAME: hydra-org2blog
+#+begin_src emacs-lisp :tangle yes
+(defhydra hydra-org2blog (global-map "<menu> o") 
+  "
+ ^Post^        q^Page^       ^C&Ts^
+------------------------------------------
+ _n_ew         post _D_raft _C_omplete C&Ts
+ post _d_raft  _P_ublish    list _c_ategories
+ _p_ublish                list _t_ags
+
+ show in _b_rowser
+ _SPC_ cancel
+"
+  ("C" org2blog/wp-complete-category)
+  ("D" org2blog/wp-post-buffer-as-page)
+  ("P" org2blog/wp-post-buffer-as-page-and-publish)
+  ("b" org2blog/wp-show-post-in-browser)
+  ("c" org2blog/wp-categories-list)
+  ("d" org2blog/wp-post-buffer)             ; post the entry as a draft
+  ("n" org2blog/wp-new-entry)               ; create a new post
+  ("p" org2blog/wp-post-buffer-and-publish) ; post and publish the entry
+  ("t" org2blog/wp-tags-list)
+  ("SPC" nil)
+  )
+#+end_src
+
+#+begin_quote
+In the spirit of upping my navigation game, here we examine navigation by search like methods. You probably know about C-s with will search forward for a word, and C-r which will search backwards. This will get you to the start of a word pretty easily. It won't get you into a word though, you have to navigate to that, and it isn't too handy to get to a line, or window, or headline in an org-file. Each of these is an emacs command, which as with navigation I don't always remember. Today, we build a hydra to make this easy too. 
+
+We will use features from avy , and helm , and some standard emacs features. avy is pretty neat. It provides an interface to jump to characters, words and subwords by pressing keys. To jump to a character that is visible on the screen, you invoke avy-goto-char and press the character you want to jump to. avy will overlay a sequence of keys you then type to jump to that character. It might be more convenient to jump to a pair of characters, which you do by invoking avy-goto-char-2. Similarly, there are commands to jump to the beginning of a word, and a subword, both with variations that allow you to specify the beginning letter of the word, or to get overlays on every word. 
+
+I spend most of my days in org-files, so I frequently want to jump to an org headline in the current buffer, or some headline in an org-file in my agenda. Helm provides a nice set of functions for this in helm-org-headlines and helm-org-agenda-files-headings. We can also use helm-multi-swoop-org to use the swoop search function in all open org-buffers with helm selection. Within a buffer, you might also use the search forward and backward capabilities, or the more advanced helm-occur or swiper-helm features. Finally, I may want my cursor to go to another recent file, or open buffer. 
+
+The hydra we will develop here puts all of these commands a few keystrokes away, with a hint system to remind you what is possible. In addition to these "goto" commands, I add a character to switch to the navigation hydra we developed in the last post so I can switch to navigation if I change my mind. I also put two commands to store the current position before the goto command, and to return to that stored position conveniently. I bind this hydra to super-g, because the super key isn't used much on my Mac, and g reminds of "goto". So, here is my hydra code: 
+#+end_quote
+
+[[http://jkitchin.github.io/blog/2015/09/28/A-cursor-goto-hydra-for-emacs][The Kitchin Research Group]]
+
+#+NAME: goto
+#+begin_src emacs-lisp :tangle no
+(defhydra goto (:color blue :hint nil)
+  "
+Goto:
+^Char^ ^Word^ ^org^ ^search^
+^^^^^^^^---------------------------------------------------------------------------
+_c_: 2 chars _w_: word by char _o_: ivy-occur
+_C_: char _W_: some word _p_: swiper
+_L_: char in line _s_: subword by char _q_: swoop org buffers _f_: search forward
+^ ^ _S_: some subword ^ ^ _b_: search backward
+-----------------------------------------------------------------------------------
+_l_: avy-goto-line
+_i_: ace-window
+
+
+_n_: Navigate _._: mark position _/_: jump to mark
+"
+  ("c" avy-goto-char-2)
+  ("C" avy-goto-char)
+  ("L" avy-goto-char-in-line)
+  ("w" avy-goto-word-1)
+  ;; jump to beginning of some word
+  ("W" avy-goto-word-0)
+  ;; jump to subword starting with a char
+  ("s" avy-goto-subword-1)
+  ;; jump to some subword
+  ("S" avy-goto-subword-0)
+
+  ("l" avy-goto-line)
+  ("i" ace-window)
+
+  ;; ("h" helm-org-headlines)
+  ;; ("a" helm-org-agenda-files-headings)
+  ("q" helm-multi-swoop-org)
+
+  ("o" ivy-occur)
+  ("p" swiper)
+
+  ("f" isearch-forward)
+  ("b" isearch-backward)
+
+  ("." org-mark-ring-push :color red)
+  ("/" org-mark-ring-goto :color blue)
+  ;; ("B" helm-buffers-list)
+  ;; ("m" helm-mini)
+  ;; ("R" helm-recentf)
+  ("n" hydra-navigate/body))
+
+(global-set-key (kbd "H-g") 'goto/body)
+#+end_src
+
+* org                                                            :keybinding:
+
+  This is my heavily simplified org-mode configuration. My older one, which I used for a few years, collected a significant layer of cruft from:
+
+  - stuff I tried
+  - workflows I abandoned
+  - items not fully baked
+
+  This configuration features productivity and GTD/GSD. The simplicity provides greater focus on the workflow and results while reducing the friction of use. It relies little on external third party apps and features unless a clear benefit exists - voice input of reminders and tasks on iOS, for example.
+  
+
+** initialization                                                :keybinding:
+
+#+BEGIN_SRC emacs-lisp :tangle yes
+(use-package org
+  :ensure t
+  :demand
+  :bind
+  ("C-c a" . org-agenda )
+  ("C-c c" . org-capture)
+  ("H-c"   . org-capture)
+  ("H-a"   . org-agenda )
+  :init
+  (add-hook 'org-mode-hook
+            (lambda()
+              (variable-pitch-mode t)
+              (visual-line-mode    1)
+              (flyspell-mode       1)
+              )
+            )
+  (add-to-list 'auto-mode-alist '("\\.\\(org\\|org_archive\\|txt\\)$" . org-mode))
+  :config
+  (setq
+   org-replace-disputed-keys         t
+   org-src-fontify-natively          t
+   org-src-preserve-indentation      t
+   org-src-tab-acts-natively         t
+   org-src-window-setup              'current-window
+   org-CUA-compatible                t
+   )
+  (dolist
+      (face '(
+              org-block-begin-line
+              org-block-end-line
+              org-verbatim
+              ;; org-block-background ; stopped working Aug 2015 http://orgmode.org/cgit.cgi/org-mode.git/commit/?id=f8b42e8
+              org-code
+              org-block
+              org-table
+              org-meta-line
+              org-document-info
+              org-document-info-keyword
+            font-lock-comment-face
+            )
+            )
+    (set-face-attribute face nil :inherit 'fixed-pitch)    
+    )
+  )
+#+END_SRC
+
+** org-mouse
+
+#+NAME:
+#+begin_src emacs-lisp :tangle yes
+(use-package org-mouse)
+#+end_src
+
+** GSD
+
+[[https://emacs.cafe/emacs/orgmode/gtd/2017/06/30/orgmode-gtd.html][Orgmode for GTD on Emacs cafe]]
+  
+#+begin_src emacs-lisp :tangle yes
+  (setq org-agenda-files '("~/gtd/inbox.org"
+                           "~/gtd/gtd.org"
+                           "~/gtd/tickler.org"))
+
+  (setq org-capture-templates '(
+				("t" "Todo [inbox]" entry
+                                 (file+headline "~/gtd/inbox.org" "Tasks")
+                                 "* TODO %i%?")
+                                ("T" "Tickler" entry
+                                 (file+headline "~/gtd/tickler.org" "Tickler")
+                                 "* %i%? \n %U")
+				("n" "Note [inbox]" entry
+				 (file+headline "~/gtd/inbox.org" "Notes")
+				 "* %i%? \n %U")
+				)
+	)
+
+  (setq org-refile-targets '(("~/gtd/gtd.org" :maxlevel . 3)
+                             ("~/gtd/someday.org" :level . 1)
+                             ("~/gtd/tickler.org" :maxlevel . 2)))
+
+
+  (setq org-todo-keywords '((sequence
+                             "TODO(t)"
+                             "WAITING(w)"
+                             "|"
+                             "DONE(d)"
+                             "CANCELLED(c)"
+                             )))
+
+  (setq org-agenda-custom-commands 
+        '(("o" "At the office" tags-todo "@office"
+           ((org-agenda-overriding-header "Office")
+            (org-agenda-skip-function #'my-org-agenda-skip-all-siblings-but-first)))))
+
+  (defun my-org-agenda-skip-all-siblings-but-first ()
+    "Skip all but the first non-done entry."
+    (let (should-skip-entry)
+      (unless (org-current-is-todo)
+        (setq should-skip-entry t))
+      (save-excursion
+        (while (and (not should-skip-entry) (org-goto-sibling t))
+          (when (org-current-is-todo)
+            (setq should-skip-entry t))))
+      (when should-skip-entry
+        (or (outline-next-heading)
+            (goto-char (point-max))))))
+		  
+  (defun org-current-is-todo ()
+    (string= "TODO" (org-get-todo-state)))
+
+#+end_src
+
+** structure templates & other initialization
+
+#+BEGIN_SRC emacs-lisp :tangle yes
+(setq
+ org-structure-template-alist     '(
+                                    ("A" "#+ascii: ")
+                                    ("H" "#+html: " "<literal style=\"html\">?</literal>")
+                                    ("I" "#+include %file ?" "<include file=%file markup=\"?\">")
+                                    ("L" "#+latex: " "<literal style=\"latex\">?</literal>")
+                                    ("S" "#+end_src\n\n#+NAME: ?\n#+begin_src emacs-lisp" "</src>\n?\n<src lang=\"emacs-lisp\">")
+                                    ("a" "#+begin_ascii\n?\n#+end_ascii")
+                                    ("c" "#+BEGIN_COMMENT\n?\n#+END_COMMENT")
+                                    ("E" "#+begin_example\n?\n#+end_example" "<example>\n?\n</example>")
+                                    ("h" "#+begin_html\n?\n#+end_html" "<literal style=\"html\">\n?\n</literal>")
+                                    ("i" "#+index: ?" "#+index: ?")
+                                    ("e" "#+NAME:\n#+begin_src emacs-lisp :tangle yes\n?\n#+end_src" "<src lang=\"emacs-lisp\">\n?\n</src>")
+                                    ("p" "#+BEGIN_PRACTICE\n?\n#+END_PRACTICE")
+                                    ("q" "#+begin_quote\n?\n#+end_quote" "<quote>\n?\n</quote>")
+                                    ("s" "#+begin_src ?\n\n#+end_src" "<src lang=\"?\">\n\n</src>")
+                                    ("v" "#+BEGIN_VERSE\n?\n#+END_VERSE" "<verse>\n?\n</verse>")
+                                    )
+     )
+#+END_SRC
+
+** indent                                                        :keybinding:
+
+   http://www.wisdomandwonder.com/link/9858/you-probably-want-org-return-indent-bound-to-return
+
+   [[http://kitchingroup.cheme.cmu.edu/blog/2017/04/09/A-better-return-in-org-mode/][A better return in org-mode]]
+
+#+NAME:
+#+begin_src emacs-lisp :tangle yes
+;; (define-key org-mode-map (kbd "RET") 'org-return-indent)
+;; (define-key org-mode-map (kbd "<return>") 'org-return-indent)
+
+(use-package org-inlinetask
+  )
+
+(defun scimax/org-return (&optional ignore)
+  "Add new list item, heading or table row with RET.
+A double return on an empty element deletes it.
+Use a prefix arg to get regular RET. "
+  (interactive "P")
+  (if ignore
+      (org-return)
+    (cond
+
+     ((eq 'line-break (car (org-element-context)))
+      (org-return-indent))
+
+     ;; Open links like usual, unless point is at the end of a line.
+     ;; and if at beginning of line, just press enter.
+     ((or (and (eq 'link (car (org-element-context))) (not (eolp)))
+          (bolp))
+      (org-return))
+
+     ;; It doesn't make sense to add headings in inline tasks. Thanks Anders
+     ;; Johansson!
+     ((org-inlinetask-in-task-p)
+      (org-return))
+
+     ;; checkboxes too
+     ((org-at-item-checkbox-p)
+      (org-insert-todo-heading nil))
+
+     ;; lists end with two blank lines, so we need to make sure we are also not
+     ;; at the beginning of a line to avoid a loop where a new entry gets
+     ;; created with only one blank line.
+     ((org-in-item-p)
+      (if (save-excursion (beginning-of-line) (org-element-property :contents-begin (org-element-context)))
+          (org-insert-heading)
+        (beginning-of-line)
+        (delete-region (line-beginning-position) (line-end-position))
+        (org-return)))
+
+     ;; org-heading
+     ((org-at-heading-p)
+      (if (not (string= "" (org-element-property :title (org-element-context))))
+          (progn (org-end-of-meta-data)
+                 (org-insert-heading-respect-content)
+                 (outline-show-entry))
+        (beginning-of-line)
+        (setf (buffer-substring
+               (line-beginning-position) (line-end-position)) "")))
+
+     ;; tables
+     ((org-at-table-p)
+      (if (-any?
+           (lambda (x) (not (string= "" x)))
+           (nth
+            (- (org-table-current-dline) 1)
+            (org-table-to-lisp)))
+          (org-return)
+        ;; empty row
+        (beginning-of-line)
+        (setf (buffer-substring
+               (line-beginning-position) (line-end-position)) "")
+        (org-return)))
+
+     ;; fall-through case
+     (t
+      (org-return))))
+  )
+
+
+(define-key org-mode-map (kbd "RET")
+  'scimax/org-return)
+(define-key org-mode-map (kbd "<return>")
+  'scimax/org-return)
+#+end_src
+
+** org-cliplinks                                                 :keybinding:
+
+[[https://github.com/rexim/org-cliplink][rexim/org-cliplink · GitHub]]
+
+#+NAME: org-cliplink
+#+begin_src emacs-lisp :tangle yes
+(use-package org-cliplink
+  :ensure t
+  :bind
+  ("C-c l" . org-cliplink)
+  )
+#+end_src
+   
+** drag and drop                                                 :keybinding:
+
+   [[http://kitchingroup.cheme.cmu.edu/blog/2015/07/10/Drag-images-and-files-onto-org-mode-and-insert-a-link-to-them/][The Kitchin Research Group]]
+   
+#+begin_quote
+ I want to drag and drop an image onto an org mode file and get a link to that file. This would be used for finding images in Finder, and then dragging them to the Emacs buffer. There is org-download.el which looks like it should do something like this too, but it did not work out of the box for me, and I want to add a few wrinkles to it. For a simple drag-n-drop, I just want the link to appear. With ctrl-drag-n-drop I want to add an attr_org line to set the image size, add a caption line, insert the image at the beginning of the line where the mouse cursor is, put the cursor on the caption line and then refresh the inline images in org-mode so the image is immediately visible.
+
+While we are at let us also make it possible to drag file links onto org-files, instead of having the files open. Again, for a simple drag-n-drop, I want a link inserted. For ctrl-drag-n-drop we open the file, and for Meta (alt) drag-n-drop, we insert an attachfile link. You can also define s-drag-n-drop (Super/command) and C-s and M-s drag-n-drop if you can think of things to do with that. 
+#+end_quote
+
+#+begin_src emacs-lisp :tangle yes
+(defun my-dnd-func (event)
+  (interactive "e")
+  (goto-char (nth 1 (event-start event)))
+  (x-focus-frame nil)
+  (let* ((payload (car (last event)))
+         (type (car payload))
+         (fname (cadr payload))
+         (img-regexp "\\(png\\|jp[e]?g\\)\\>"))
+    (cond
+     ;; insert image link
+     ((and  (eq 'drag-n-drop (car event))
+            (eq 'file type)
+            (string-match img-regexp fname))
+      (insert (format "[[%s]]" fname))
+      (org-display-inline-images t t))
+     ;; insert image link with caption
+     ((and  (eq 'C-drag-n-drop (car event))
+            (eq 'file type)
+            (string-match img-regexp fname))
+      (insert "#+ATTR_ORG: :width 300\n")
+      (insert (concat  "#+CAPTION: " (read-input "Caption: ") "\n"))
+      (insert (format "[[%s]]" fname))
+      (org-display-inline-images t t))
+     ;; C-drag-n-drop to open a file
+     ((and  (eq 'C-drag-n-drop (car event))
+            (eq 'file type))
+      (find-file fname))
+     ((and (eq 'M-drag-n-drop (car event))
+           (eq 'file type))
+      (insert (format "[[attachfile:%s]]" fname)))
+     ;; regular drag and drop on file
+     ((eq 'file type)
+      (insert (format "[[%s]]\n" fname)))
+     (t
+      (error "I am not equipped for dnd on %s" payload)))))
+
+
+(define-key org-mode-map (kbd "<drag-n-drop>") 'my-dnd-func)
+(define-key org-mode-map (kbd "<C-drag-n-drop>") 'my-dnd-func)
+(define-key org-mode-map (kbd "<M-drag-n-drop>") 'my-dnd-func)
+#+end_src
+
+** org-wunderlist                                                   :private:
+
+   Wunderlist, while it exists, provides a bridge between iOS voice input for reminders and org-mode. A ifttt.com recipe emails newly created iOS/macOS reminders into Wunderlist. This package pulls the entries into an org-file. Each of the entries brought in gets refiled. I manually delete the reminders and Wunderlist entries.
+
+   - [ ] TODO automate task & reminder import into org-mode and delete the originating source entry (Reminders, Wunderlist, IBM Notes/Verse, etc.)
+   
+#+NAME: org-wunderlist
+#+begin_src emacs-lisp :tangle yes
+(use-package org-wunderlist
+  :ensure t
+  :config
+  (setq
+      org-wunderlist-file  "~/gtd/wunderlist.org"
+      org-wunderlist-dir "~/gtd/org-wunderlist/")
+  )
+#+end_src
+
+** Tasks
+
+   - [ ] [[https://github.com/calvinwyoung/org-autolist][GitHub - calvinwyoung/org-autolist: Making it even easier to edit lists in or...]]
+   - [ ] [[http://kitchingroup.cheme.cmu.edu/blog/2017/04/09/A-better-return-in-org-mode/][A better return in org-mode]]
+   - [ ] [[http://www.bobnewell.net/publish/35years/webclipper.html][A Web Clipper of Sorts for Org-Mode]]
+
+
+
+#+BEGIN_SRC emacs-lisp :tangle yes
+
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp :tangle yes
+
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp :tangle yes
+
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp :tangle yes
+
+#+END_SRC
+** TODO org2blog
+
+#+NAME: xml-rpc from githhub
+#+begin_src emacs-lisp :tangle yes
+(use-package xml-rpc
+  :load-path "elisp\xml-rpc-el-master"
+  )
+#+end_src
+
+   [[http://lavnir.be/wp/?p%3D6][org2blog]] authentication tips
+
+#+NAME: org2blog
+#+begin_src emacs-lisp :tangle yes
+(use-package org2blog
+  :ensure t
+  :load-path "../OneDrive/Documents/GitHub/org2blog"
+  :defer t
+  ;; :bind
+  ;; ("C-c o p" . org2blog/wp-post-buffer-and-publish)
+  ;; ("C-c o d" . org2blog/wp-post-buffer)
+  ;; ("C-c o c" . org2blog/wp-complete-category)
+  ;; ("C-c o n" . org2blog/wp-new-entry)
+  :config
+  (setq
+   org2blog/wp-use-sourcecode-shortcode t
+   org2blog/wp-confirm-post t
+   org2blog/wp-track-posts t
+   ;; org2blog/wp-buffer-format-function 'my-format-function
+   org2blog/wp-blog-alist
+   `(
+     ("PRJ"
+      :url "https://www.prjorgensen.com/xmlrpc.php"
+      :username ,(car (auth-source-user-and-password "prjorgensen.com"))
+      :password ,(cadr (auth-source-user-and-password "prjorgensen.com"))
+      :default-title "Hello, World!"
+      :default-categories ("Uncategorized" "org2blog")
+      )
+     ("PVCSEC"
+      :url "https://www.pvcsec.com/xmlrpc.php"
+      :username ,(car (auth-source-user-and-password "pvcsec.com"))
+      :password ,(cadr (auth-source-user-and-password "pvcsec.com"))
+      :default-title "Hello, World!"
+      :default-categories ("Uncategorized" "org2blog")
+      )
+     )
+   )
+  (defun my-format-function (format-string)
+    (format format-string
+	    org2blog/wp-default-title
+	    (format-time-string "%d-%m-%Y" (current-time)))
+    )
+  )
+#+end_src
+
+#+NAME: htmlize
+#+begin_src emacs-lisp :tangle yes
+  (use-package htmlize
+    :ensure t
+    )
+#+end_src
+
+* desktop
+
+#+NAME: desktop
+#+begin_src emacs-lisp :tangle yes
+(use-package desktop
+  :config
+  (setq
+   desktop-base-file-name (concat user-emacs-directory (car (split-string (system-name) "\\.")) ".desktop")
+   desktop-base-lock-name (concat user-emacs-directory (car (split-string (system-name) "\\.")) ".desktop.lock")
+   )
+  ;; (add-hook 'after-init-hook #'my/desktop-settings-setup "APPEND")
+  ;; (add-hook 'after-init-hook #'my/hide-init-buffers "APPEND")
+  ;; (kill-buffer "*scratch*")
+  (desktop-save-mode 1)
+  )
+#+end_src
+
+#+NAME: winner-mode
+#+begin_src emacs-lisp :tangle yes
+(winner-mode 1)
+#+end_src
+
+* window management
+
+** ace-window
+
+#+NAME: ace-window
+#+begin_src emacs-lisp :tangle yes
+(use-package ace-window
+  :ensure t
+  :defer 1
+  :config
+  (set-face-attribute 'aw-leading-char-face nil :foreground "deep sky blue" :weight 'bold :height 3.0)
+  (set-face-attribute 'aw-mode-line-face nil :inherit 'mode-line-buffer-id :foreground "lawn green")
+  (setq
+   aw-keys   '(?a ?s ?d ?f ?j ?k ?l)
+   aw-dispatch-always t
+   aw-dispatch-alist
+   '(
+     (?x aw-delete-window     "Ace - Delete Window")
+     (?c aw-swap-window       "Ace - Swap Window")
+     (?n aw-flip-window)
+     (?v aw-split-window-vert "Ace - Split Vert Window")
+     (?h aw-split-window-horz "Ace - Split Horz Window")
+     (?m delete-other-windows "Ace - Maximize Window")
+     (?g delete-other-windows)
+     (?b balance-windows)
+     (?u winner-undo)
+     (?r winner-redo)
+     )
+   )
+  
+  (when (package-installed-p 'hydra)
+    (defhydra hydra-window-size (:color red)
+      "Windows size"
+      ("h" shrink-window-horizontally "shrink horizontal")
+      ("j" shrink-window "shrink vertical")
+      ("k" enlarge-window "enlarge vertical")
+      ("l" enlarge-window-horizontally "enlarge horizontal")
+      )
+    (defhydra hydra-window-frame (:color red)
+      "Frame"
+      ("f" make-frame "new frame")
+      ("x" delete-frame "delete frame")
+      )
+    (defhydra hydra-window-scroll (:color red)
+      "Scroll other window"
+      ("n" joe-scroll-other-window "scroll")
+      ("p" joe-scroll-other-window-down "scroll down")
+      )
+    (add-to-list 'aw-dispatch-alist '(?w hydra-window-size/body) t)
+    (add-to-list 'aw-dispatch-alist '(?o hydra-window-scroll/body) t)
+    (add-to-list 'aw-dispatch-alist '(?\; hydra-window-frame/body) t))
+  (ace-window-display-mode t)
+  )
+#+end_src
+
+** wind move
+
+#+NAME: windmove
+#+begin_src emacs-lisp :tangle yes
+(use-package windmove
+  :ensure t
+  :bind (
+  	 ("<f2> <right>" . windmove-right)
+  	 ("<f2> <left>"  . windmove-left)
+  	 ("<f2> <up>"    . windmove-up)
+  	 ("<f2> <down>"  . windmove-down)
+  	 )
+  :init
+  ;; Make windmove work in org-mode:
+  ;; (add-hook 'org-shiftup-final-hook 'windmove-up)
+  ;; (add-hook 'org-shiftleft-final-hook 'windmove-left)
+  ;; (add-hook 'org-shiftdown-final-hook 'windmove-down)
+  ;; (add-hook 'org-shiftright-final-hook 'windmove-right)
+  :config
+  (windmove-default-keybindings 'super)
+  )
+#+end_src
+
+** frame move
+
+#+NAME: framemove
+#+begin_src emacs-lisp :tangle yes
+(use-package framemove
+  :ensure t
+  ;; :bind (
+  ;; 	 ("<menu> <right>" . fm-right-frame)
+  ;; 	 ("<menu> <left>"  . fm-left-frame)
+  ;; 	 ("<menu> <up>"    . fm-up-frame)
+  ;; 	 ("<menu> <down>"  . fm-down-frame)
+  ;; 	 )
+  :config
+  ;; (windmove-default-keybindings)
+  (setq
+   framemove-hook-into-windmove t
+   )
+)
+#+end_src
+
+** more window stuff
+
+#+NAME:
+#+begin_src emacs-lisp :tangle yes
+(use-package switch-window
+  :bind (
+	 ("<f2> o" . switch-window)
+	 )
+  )
+#+end_src
+
+* dired
+
+#+NAME:
+#+begin_src emacs-lisp :tangle no
+(defhydra hydra-dired (:hint nil :color pink)
+  "
+_+_ mkdir          _v_iew           _m_ark             _(_ details        _i_nsert-subdir    wdired
+_C_opy             _O_ view other   _U_nmark all       _)_ omit-mode      _$_ hide-subdir    C-x C-q : edit
+_D_elete           _o_pen other     _u_nmark           _l_ redisplay      _w_ kill-subdir    C-c C-c : commit
+_R_ename           _M_ chmod        _t_oggle           _g_ revert buf     _e_ ediff          C-c ESC : abort
+_Y_ rel symlink    _G_ chgrp        _E_xtension mark   _s_ort             _=_ pdiff
+_S_ymlink          ^ ^              _F_ind marked      _._ toggle hydra   \\ flyspell
+_r_sync            ^ ^              ^ ^                ^ ^                _?_ summary
+_z_ compress-file  _A_ find regexp
+_Z_ compress       _Q_ repl regexp
+
+T - tag prefix
+"
+  ("\\" dired-do-ispell)
+  ("(" dired-hide-details-mode)
+  (")" dired-omit-mode)
+  ("+" dired-create-directory)
+  ("=" diredp-ediff)         ;; smart diff
+  ("?" dired-summary)
+  ("$" diredp-hide-subdir-nomove)
+  ("A" dired-do-find-regexp)
+  ("C" dired-do-copy)        ;; Copy all marked files
+  ("D" dired-do-delete)
+  ("E" dired-mark-extension)
+  ("e" dired-ediff-files)
+  ("F" dired-do-find-marked-files)
+  ("G" dired-do-chgrp)
+  ("g" revert-buffer)        ;; read all directories again (refresh)
+  ("i" dired-maybe-insert-subdir)
+  ("l" dired-do-redisplay)   ;; relist the marked or singel directory
+  ("M" dired-do-chmod)
+  ("m" dired-mark)
+  ("O" dired-display-file)
+  ("o" dired-find-file-other-window)
+  ("Q" dired-do-find-regexp-and-replace)
+  ("R" dired-do-rename)
+  ("r" dired-do-rsynch)
+  ("S" dired-do-symlink)
+  ("s" dired-sort-toggle-or-edit)
+  ("t" dired-toggle-marks)
+  ("U" dired-unmark-all-marks)
+  ("u" dired-unmark)
+  ("v" dired-view-file)      ;; q to exit, s to search, = gets line #
+  ("w" dired-kill-subdir)
+  ("Y" dired-do-relsymlink)
+  ("z" diredp-compress-this-file)
+  ("Z" dired-do-compress)
+  ("q" nil)
+  ("." nil :color blue))
+
+(define-key dired-mode-map "." 'hydra-dired/body)
+#+end_src
+
+* interface
+** adaptive visual line mode
+
+  According to http://redhotchilipython.com/en_posts/2013-05-26-emacs-visual-line.html (disappeared as of 2015-02-17): "For �soft wrapping� in emacs, currently best option seems to be Visual Line Mode, but it lacks nice indentation facilities. So it needs also an Adaptive Wrap mode."
+
+  I think this needs to move somewhere else in my init, I'm just not sure where
+
+#+NAME: adaptive-wrap
+#+begin_src emacs-lisp :tangle yes
+(use-package adaptive-wrap
+  :ensure t
+  :config
+  (setq
+   adaptive-wrap-extra-indent 4
+   )
+  (add-hook 'visual-line-mode-hook 'adaptive-wrap-prefix-mode)
+  (diminish 'visual-line-mode "🎁")
+  )
+#+end_src
+
+** aggressive indent
+
+#+NAME:aggressive-indent
+#+BEGIN_SRC emacs-lisp :tangle yes
+(use-package aggressive-indent
+  :diminish "⏭"
+  :ensure t
+  :defer t
+  :config
+  (global-aggressive-indent-mode 1)
+  (add-to-list 'aggressive-indent-excluded-modes 'html-mode)
+  )
+#+END_SRC
+
+** theme
+
+  Set up the solarized theme, making sure to not automatically adjust font sizes. Might mess up Gnu/Linux.
+
+#+NAME: solarized-theme
+#+begin_src emacs-lisp :tangle yes
+(use-package solarized-theme
+  :ensure t
+  :config
+  (setq
+   solarized-distinct-fringe-background t
+   x-underline-at-descent-line          t
+   solarized-high-contrast-mode-line    nil
+   solarized-scale-org-headlines        nil
+   ;; Prefer italics over bold
+   solarized-use-less-bold t
+   solarized-use-more-italic t
+   solarized-distinct-doc-face t ; Emphasize docstrings
+   ;; I find different font sizes irritating.
+   solarized-height-minus-1 1.0
+   solarized-height-plus-1 1.0
+   solarized-height-plus-2 1.0
+   solarized-height-plus-3 1.0
+   solarized-height-plus-4 1.0
+   )
+  (load-theme 'solarized-light)
+  (load-theme 'smart-mode-line-light)
+  )
+#+end_src
+
+Set up theme-changer to give me a light theme in the day and a dark one at night based on my hard-coded location.  Check it out here: [[https://github.com/hadronzoo/theme-changer][theme-changer on GitHub]]. Note smart-mode-line (sml) themes in the second change-theme call. You can stack these since sml themes are theme-engine compatible.
+
+#+NAME: theme-changer
+#+begin_src emacs-lisp :tangle no
+(use-package theme-changer
+  :disabled t
+;;   :ensure   t
+  :config
+  ;; (change-theme 'solarized-light 'solarized-dark)
+  ;; (change-theme 'smart-mode-line-light 'smart-mode-line-dark)
+  )
+#+end_src
+
+** smart mode line
+
+  Check out [[https://github.com/Bruce-Connor/smart-mode-line/][smart-mode-line on GitHub]].
+
+#+NAME: smart-mode-line
+#+BEGIN_SRC emacs-lisp :tangle yes
+(use-package smart-mode-line
+  :ensure t
+  :after spaceline-config
+  :config
+  (sml/setup)
+  (add-to-list 'sml/replacer-regexp-list '("^~/OneDrive/"    ":1:") t)
+  (add-to-list 'sml/replacer-regexp-list '("[dD]ocuments/"   "📎:") )
+  (add-to-list 'sml/replacer-regexp-list '("[dD]ownloads/"   "🢛:" ) )
+  (add-to-list 'sml/replacer-regexp-list '("[mM]usic/"       "🎵:" ) )
+  (add-to-list 'sml/replacer-regexp-list '("[vV]ideos/"      "📼:") )
+  (add-to-list 'sml/replacer-regexp-list '("[pP]ictures/"    "🖼:" ) )
+  (add-to-list 'sml/replacer-regexp-list '("/etc/"           ":&:") )
+  (add-to-list 'sml/replacer-regexp-list '("[pP]rojects/"    "📽:") )
+  )
+#+END_SRC
+
+#+NAME: ergoemacs-status
+#+begin_src emacs-lisp :tangle no
+(use-package ergoemacs-status
+  :ensure t
+  :after solarized-theme
+  :config
+  (ergoemacs-status-mode)
+  )
+#+end_src
+
+** mode-icons
+
+#+NAME:
+#+begin_src emacs-lisp :tangle yes
+(use-package mode-icons
+  :ensure t
+  :after spaceline-config
+  :config
+  (mode-icons-mode)
+  )
+#+end_src
+
+** spaceline & powerline
+
+#+NAME: spaceline
+#+begin_src emacs-lisp :tangle yes
+(use-package spaceline-config           ; A beautiful mode line
+  :ensure spaceline
+  :after solarized-theme
+  :config
+  ;; (spaceline-helm-mode)                 ; Enable a special Helm mode line
+  (spaceline-emacs-theme)
+  )
+#+end_src
+
+#+NAME: powerline
+#+begin_src emacs-lisp :tangle yes
+(use-package powerline                  ; The work-horse of Spaceline
+  :ensure t
+  :after spaceline-config
+  :config (setq
+           powerline-height (truncate (* 1.0 (frame-char-height)))
+           powerline-default-separator 'utf-8
+           )
+  )
+#+end_src
+
+** scroll
+
+http://pragmaticemacs.com/emacs/scrolling-and-moving-by-line/
+
+#+begin_quote
+ There are (of course) lots of ways to scroll the window and move the cursor in emacs. To move the cursor up or down by a line you can use the arrow keys, or C-n and C-p.
+
+To scroll the window, you can use C-v and M-v to scroll down or up respectively by nearly one full screen. This is equivalent to page up/down.
+
+Normally when you scroll the window, the cursor stays with its current line until it hits the edge of the window and then it moves to the next line. In other words the cursor follows the text as the text scrolls. I prefer the cursor to stay at the same position in the window when I scroll it, so the text moves under the cursor. I also like to add the following simple commands which scroll the window up or down by one line. Putting these two tweaks together, the window moves by one line while the cursor stays still. 
+#+end_quote
+  
+#+NAME:
+#+begin_src emacs-lisp :tangle yes
+(setq scroll-preserve-screen-position 1) ; keep cursor at same position when scrolling
+(global-set-key (kbd "M-n") (kbd "C-u 1 C-v")) ; scroll window up by 1 line
+(global-set-key (kbd "M-p") (kbd "C-u 1 M-v")) ; scroll window down by 1 line
+#+end_src
+
+#+begin_quote
+ Note how these commands work by passing a prefix argument to the normal scroll commands – this is described in the help for those functions which you can see by using e.g. C-h k C-v.
+
+I used the keybindings M-n and M=p by analogy with C-n and C-p. 
+#+end_quote
+
+** parenthesis
+
+#+NAME: highlight parenthetical expression
+#+begin_src emacs-lisp :tangle yes
+(setq
+ show-paren-style 'expression           ; highlight entire bracket expression
+ )
+(show-paren-mode 1)
+#+end_src
+
+#+NAME: electric-pair-mode
+#+begin_src emacs-lisp :tangle yes
+;; make electric-pair-mode work on more brackets
+(setq
+ electric-pair-pairs '(
+                       (?\" . ?\")
+                       (?\{ . ?\})
+                       )
+ )
+(electric-pair-mode 1)
+#+end_src
+
+** rainbow-delimiters
+
+#+NAME:
+#+begin_src emacs-lisp :tangle yes
+(use-package rainbow-delimiters
+  :ensure t
+  :config
+  (add-hook 'prog-mode-hook 'rainbow-delimiters-mode)
+  )
+#+end_src
+
+** rainbow-mode
+  
+#+BEGIN_SRC emacs-lisp :exports code :comments both :padline yes :tangle yes
+(use-package rainbow-mode
+  :ensure t
+  :defer t
+  :diminish "🌈"
+  :config
+  (add-hook 'css-mode-hook 'rainbow-mode)
+  ;; (eval-after-load "diminish"
+  ;;   '(progn
+  ;;      (eval-after-load "rainbow-mode"
+  ;;        '(diminish 'rainbow-mode "rb")))
+  ;; )
+  )
+#+END_SRC
+
+
+** dimish bufface from mode line
+
+#+NAME:
+#+begin_src emacs-lisp :tangle yes
+;; Remove BufFace from mode line
+(eval-after-load "face-remap"
+  '(diminish 'buffer-face-mode))
+#+end_src
+
+
+** beacon
+
+  Highlight cursor position in buffer.
+  
+#+NAME:
+#+begin_src emacs-lisp :tangle yes
+(use-package beacon                     ; Highlight cursor position in buffer
+  :ensure t
+  :init (beacon-mode 1)
+  :diminish "⚐"
+  )
+#+end_src
+
+* which-key
+   
+#+NAME: which-key
+#+begin_src emacs-lisp :tangle yes
+(use-package which-key
+  :diminish "¿"
+  :ensure t
+  :init (which-key-mode)
+  :config
+  (setq
+   which-key-idle-delay 0.4
+   which-key-sort-order 'which-key-prefix-then-key-order
+   ;; Let's go unicode :)
+   which-key-key-replacement-alist  '(("<\\([[:alnum:]-]+\\)>" . "\\1")
+                                      ("up"                    . "↑")
+                                      ("right"                 . "→")
+                                      ("down"                  . "↓")
+                                      ("left"                  . "←")
+                                      ("DEL"                   . "⌫")
+                                      ("deletechar"            . "⌦")
+                                      ("RET"                   . "⏎"))
+   which-key-description-replacement-alist '(("Prefix Command" . "prefix")
+                                             ;; Lambdas
+                                             ("\\`\\?\\?\\'"   . "λ")
+                                             ;; Prettify hydra entry points
+                                             ("/body\\'"       . "|=")
+                                             ;; Drop/shorten package prefixes
+                                             ("\\`lunaryorn-"  . "")
+                                             ("projectile-"    . "proj-")
+                                             ("helm-"          . "⎈-")
+                                             ("magit-" . "ma-")
+                                             )
+   )
+  
+  )
+#+end_src
+* redo mode
+
+    undo-tree is an improvement over the built-in capabilities.
+
+    NOTE: redo+ is enabled for macOS in the keyboard section above
+    
+#+BEGIN_SRC emacs-lisp :tangle yes
+(use-package undo-tree
+  :ensure t
+  :diminish "⎌"
+  :bind(
+        ("C-z"   . undo)
+        ("C-S-z" . undo-tree-redo)
+        )
+  :config
+  (defalias 'redo 'undo-tree-redo)
+  (global-undo-tree-mode 1)
+  ;; (global-unset-key (kbd "C-z"))
+  ;; (global-unset-key (kbd "C-S-z"))
+  )
+#+END_SRC
+
+    + I remap C-z to undo and C-Z to redo to keep from accidentally minimizing the Emacs frame I'm working in. You do need to unset and reset in this case.
+
+#+NAME: Key Bindings
+#+begin_src emacs-lisp :tangle no
+(global-set-key (kbd "<f5>")   'undo)
+(global-set-key (kbd "<c-f5>") 'redo)
+(global-set-key (kbd "C-z")    'undo)
+(global-set-key (kbd "C-S-z")  'redo)
+#+end_src
+
+* revert & trash
+
+#+NAME: revert settings
+#+begin_src emacs-lisp :tangle yes
+(setq
+ auto-revert-verbose nil               ; don't notify when dired is refreshed
+ delete-by-moving-to-trash t
+ global-auto-revert-non-file-buffers t ; auto refresh dired
+ trash-directory "~/.Trash/"
+ )
+#+end_src
+
+#+NAME: revert buffer key bindings
+#+begin_src emacs-lisp :tangle yes
+(global-set-key (kbd "H-r") 'revert-buffer)
+#+end_src
+
+* anzu                                                               :search:
+
+#+NAME: anzu
+#+begin_src emacs-lisp :tangle yes
+(use-package anzu
+  :ensure t
+  :defer t
+  :config
+  (set-face-attribute 'anzu-mode-line nil
+                      :foreground "yellow" :weight 'bold)
+  (setq
+   anzu-mode-lighter                ""
+   anzu-deactivate-region           t
+   anzu-search-threshold            1000
+   anzu-replace-to-string-separator " => "
+   anzu-cons-mode-line-p            nil
+   )
+  :bind (
+         ([remap query-replace] . anzu-query-replace)
+         ([remap query-replace-regexp] . anzu-query-replace-regexp)
+         :map isearch-mode-map
+         ([remap isearch-query-replace] . anzu-isearch-query-replace)
+         ([remap isearch-query-replace-regexp] . anzu-isearch-query-replace-regexp)
+         ;; ("M-%"   . anzu-query-replace)
+         ;; ("C-M-%" . anzu-query-replace-regexp)
+         )
+  :init   (global-anzu-mode)
+  :diminish "￼"
+  )
+#+end_src
+
+* counsel, ivy, swiper, avy 
+
+  - [ ] [[https://cestlaz.github.io/posts/using-emacs-6-swiper/#.WV0W98aZPEZ][Using Emacs - 6 - Searching a Swiper | C'est la Z]]
+
+#+NAME: counsel
+#+begin_src emacs-lisp :tangle yes
+(use-package counsel
+  :ensure t
+  :bind
+  (
+   ("<f1>-f"  . counsel-describe-function  )
+   ("<f1>-l"  . counsel-find-library       )
+   ("<f1>-v"  . counsel-describe-variable  )
+   ("<f2>-i"  . counsel-info-lookup-symbol )
+   ("<f2>-u"  . counsel-unicode-char       )
+   ("C-."     . counsel-imenu              )
+   ("C-M-i"   . complete-symbol            )
+   ("C-S-o"   . counsel-rhythmbox          )
+   ("C-c 8"   . counsel-unicode-char       )
+   ("C-c C-r" . ivy-resume                 )
+   ("C-c V"   . ivy-pop-view               )
+   ("C-c g"   . counsel-git                )
+   ("C-c j"   . counsel-git-grep           )
+   ("C-c k"   . counsel-ag                 )
+   ("C-c v"   . ivy-push-view              )
+   ("C-s"     . swiper                     )
+   ("C-x C-f" . counsel-find-file          )
+   ("C-x b"   . ivy-switch-buffer          )
+   ("C-x l"   . counsel-locate             )
+   ("M-x"     . counsel-M-x                )
+   )
+  )
+#+end_src
+
+#+NAME: ivy
+#+begin_src emacs-lisp :tangle yes
+(use-package ivy
+  :diminish "⚘"
+  :config
+  (setq
+   ivy-use-virtual-buffers      t
+   ivy-count-format             "%d/%d "
+   use-virtual-buffers          t
+   enable-recursive-minibuffers t
+   ivy-switch-buffer-faces-alist
+   '(
+     (emacs-lisp-mode . swiper-match-face-1)
+     (dired-mode      . ivy-subdir)
+     (org-mode        . org-level-4)
+     )
+   )
+  (define-key read-expression-map (kbd "C-r") 'counsel-expression-history)
+  )
+#+end_src
+
+#+NAME: ivy-hydra
+#+begin_src emacs-lisp :tangle yes
+(use-package ivy-hydra
+  :ensure t)
+#+end_src
+
+#+NAME: swiper
+#+begin_src emacs-lisp :tangle yes
+(use-package swiper
+  :ensure try)
+#+end_src
+
+#+NAME: avy
+#+begin_src emacs-lisp :tangle yes
+(use-package avy
+  :ensure t
+  :config
+  (avy-setup-default)
+  )
+#+end_src
+
+* Writing: spelling, grammar, templates, autoinsert and more
+  
+** abbrev                                                           :writing:
+
+  This is in the list of packages to configure.
+
+#+NAME: abbrev
+#+begin_src emacs-lisp :tangle yes
+  (use-package abbrev
+    :diminish "𝄅⥄"
+    :config
+    (setq-default abbrev-mode t)
+    (setq
+     save-abbrevs 'silently
+     ;; abbrev-file-name (concat user-emacs-directory (car (split-string (system-name) "\\.")) ".abbrev.el")
+     )
+    (quietly-read-abbrev-file)
+    )
+#+end_src
+** define-word                                           :writing:keybinding:
+
+#+BEGIN_QUOTE
+I just stumbled upon a new offering from abo-abo. It's define-word, a very nice package that allows you to get a definition of the word at point. You can also specify the word in the minibuffer if you want.
+
+The package works by connecting to wordnik, grabbing the resulting page, parsing out the definition, and then displaying it as a message. That's nice because it doesn't require that you have a dictionary installed to work. Abo-abo says the package is less than 50 lines so there's no memory overhead to speak of.
+
+OS X has a nice feature where you can three-finger tap on a word in most of the native apps and get a definition from the system dictionary. Unfortunately it doesn't work with Emacs so I had to manually look up definitions using spotlight. That wasn't too much trouble but define-word is so much better. I bound the commands to?Hyper+d? and?Hyper+D? using use-package
+#+END_QUOTE
+
+Link is here: http://irreal.org/blog/?p=3994
+
+#+BEGIN_SRC emacs-lisp :tangle yes
+(use-package define-word
+  :ensure t
+  :bind (("H-d" . define-word-at-point)
+	 ("H-D" . define-word)))
+#+END_SRC
+
+
+** artbollocks                                                      :writing:
+
+[[http://lifehacker.com/the-useless-words-and-phrases-you-should-strike-from-yo-1690952835][The Useless Words and Phrases You Should Strike from Your Writing]]
+
+[[http://pages.sachachua.com/.emacs.d/Sacha.html#unnumbered-41][Writing - Avoid weasel words]]
+
+[[http://dianetibert.com/2014/02/06/publishing-101-targeting-passive-text-and-redundant-words/][Targetting Passive Text and Redunant Words]]
+
+[[http://dianaurban.com/words-you-should-cut-from-your-writing-immediately][43 Words You Should Cut From Your Writing Immediately]]
+
+#+NAME:artbollocks-mode
+#+begin_src emacs-lisp :tangle yes
+(use-package artbollocks-mode
+  :ensure t
+  :config
+  (progn
+    (setq artbollocks-weasel-words-regex
+          (concat "\\b"   (regexp-opt
+                           '("I think"
+                             ", but "
+                             "a lot"
+                             "absolutely"
+                             "action"
+                             "actually"
+                             "added bonus"
+                             "appears"
+                             "asked"
+                             "at this point in time"
+                             "basically"
+                             "been"
+                             "began"
+                             "begin"
+                             "begun"
+                             "both of them"
+                             "breath"
+                             "breathe"
+                             "certainly"
+                             "completely"
+                             "comprised of"
+                             "crystal clear"
+                             "definitely"
+                             "down"
+                             "downsize"
+                             "even"
+                             "exact same"
+                             "exactly the same as"
+                             "exhale"
+                             "feel"
+                             "felt"
+                             "fewer in number"
+                             "frankly"
+                             "honestly"
+                             "inasmuch"
+                             "inhale"
+                             "it is said"
+                             "just"
+                             "kind of"
+                             "leverage"
+                             "literally"
+                             "many"
+                             "maybe"
+                             "needless to say"
+                             "nice"
+                             "nod"
+                             "often"
+                             "one of the"
+                             "past history"
+                             "perhaps"
+                             "point in time"
+                             "ponder"
+                             "probably"
+                             "practically"
+                             "pretty"
+                             "probably"
+                             "quite"
+                             "rather"
+                             "reach"
+                             "realize"
+                             "really"
+                             "reason why is because"
+                             "replied"
+                             "rightsizing"
+                             "seems"
+                             "said"
+                             "should"
+                             "shrug"
+                             "so"
+                             "some"
+                             "somehow"
+                             "somewhat"
+                             "sort of"
+                             "start"
+                             "started"
+                             "streamlining"
+                             "that"
+                             "the fact that"
+                             "then"
+                             "there is no doubt that"
+                             "thing"
+                             "things"
+                             "think"
+                             "thought"
+                             "to be honest"
+                             "totally"
+                             "true fact"
+                             "truthfully"
+                             "understand"
+                             "until such time as"
+                             "up"
+                             "utterly"
+                             "very"
+                             "virtually"
+                             "was"
+                             "well"
+                             "went"
+                             "were"
+                             "what happened was"
+                             "wonder"
+                             ) t) "\\b")
+          artbollocks-jargon t
+          )
+    )
+  ;; ;; Make sure keywords are case-insensitive
+  ;; (defadvice search-for-keyword (around sacha activate)
+  ;;   "Match in a case-insensitive way."
+  ;;   (let ((case-fold-search t))
+  ;;     ad-do-it))
+  (add-hook 'org-capture-mode-hook 'artbollocks-mode)
+  (add-hook 'text-mode-hook        'artbollocks-mode)
+  (add-hook 'org-mode-hook         'artbollocks-mode)
+  (eval-after-load "artbollocks-mode" '(diminish 'artbollocks-mode "🎨"))
+  )
+#+end_src
+
+** writegood mode                                        :writing:keybinding:
+
+[[http://bnbeckwith.com/code/writegood-mode.html][WriteGood Mode home page]]
+
+#+NAME: writegood-mode
+#+begin_src emacs-lisp :tangle yes
+(use-package writegood-mode
+  :ensure t
+  :bind
+  (
+   ("C-c g"     . writegood-mode)
+   ("C-c C-g g" . writegood-grade-level)
+   ("C-c C-g e" . writegood-reading-ease)
+   )
+  :config
+  (add-hook 'org-capture-mode-hook 'writegood-mode)
+  (add-hook 'text-mode-hook        'writegood-mode)
+  (add-hook 'org-mode-hook         'writegood-mode)
+  )
+#+end_src
+
+** spelling                                              :writing:keybinding:
+
+*** flyspell
+
+#+NAME: flyspell
+#+begin_src emacs-lisp :tangle yes
+(use-package flyspell
+  :diminish "🐛"
+  :config
+  (setq
+   flyspell-issue-message-flag nil
+   flyspell-issue-welcome-flag nil
+   )
+  ;;; Add spell-checking in comments for all programming language modes
+  (dolist (hook '(lisp-mode-hook
+                  emacs-lisp-mode-hook
+                  scheme-mode-hook
+                  clojure-mode-hook
+                  ruby-mode-hook
+                  yaml-mode
+                  python-mode-hook
+                  shell-mode-hook
+                  php-mode-hook
+                  css-mode-hook
+                  haskell-mode-hook
+                  caml-mode-hook
+                  c++-mode-hook
+                  c-mode-hook
+                  lua-mode-hook
+                  crontab-mode-hook
+                  perl-mode-hook
+                  tcl-mode-hook
+                  js2-mode-hook))
+    (add-hook hook 'flyspell-prog-mode))
+  )
+#+end_src
+
+  From [[https://emacs.stackexchange.com/questions/9333/how-does-one-use-flyspell-in-org-buffers-without-flyspell-triggering-on-tangled][How does one use flyspell in org buffers without flyspell triggering on tangled code blocks?]] on StackExchange, courtesy of Chen Bin:
+
+Modified by me on [2015-06-25 Thu] to include quote blocks.
+
+#+NAME: flyspell_ignore_org_code_blocks
+#+begin_src emacs-lisp :tangle yes
+;; NO spell check for embedded snippets
+(defadvice org-mode-flyspell-verify (after org-mode-flyspell-verify-hack activate)
+  (let ((rlt ad-return-value)
+        (begin-regexp "^[ \t]*#\\+begin_\\(src\\|html\\|latex\\|quote\\)")
+        (end-regexp "^[ \t]*#\\+end_\\(src\\|html\\|latex\\|quote\\)")
+        old-flag
+        b e)
+    (when ad-return-value
+      (save-excursion
+        (setq old-flag case-fold-search)
+        (setq case-fold-search t)
+        (setq b (re-search-backward begin-regexp nil t))
+        (if b (setq e (re-search-forward end-regexp nil t)))
+        (setq case-fold-search old-flag))
+      (if (and b e (< (point) e)) (setq rlt nil))
+      )
+    (setq ad-return-value rlt))
+  )
+#+end_src
+
+*** ispell
+
+#+NAME: ispell
+#+BEGIN_SRC emacs-lisp :tangle yes
+(use-package ispell
+  :bind (
+         ("C-c s" . endless/ispell-word-then-abbrev)
+         )
+  :config
+  ;; find aspell and hunspell automatically
+  (cond
+   ((executable-find "aspell")
+    (setq
+     ispell-program-name "aspell"
+     ispell-extra-args '("--sug-mode=ultra" "--lang=en_US")
+     ispell-personal-dictionary "~/.ispell"
+     ispell-really-aspell t
+     )
+    )
+   ((executable-find "hunspell")
+    (setq
+     ispell-program-name "hunspell"
+     ispell-extra-args '("-d en_US")
+     ispell-really-hunspell t
+     ispell-local-dictionary "en_US"
+     )
+    )
+   )
+  )
+#+END_SRC
+
+Endless ispell word then abbrev, from: [[http://endlessparentheses.com/ispell-and-abbrev-the-perfect-auto-correct.html][Ispell and Abbrev, the Perfect Auto-Correct]]
+
+#+NAME:endless/ispell-word-then-abbrev
+#+begin_src emacs-lisp :tangle yes
+(define-key ctl-x-map "\C-i"
+  #'endless/ispell-word-then-abbrev)
+
+(defun endless/simple-get-word ()
+  (car-safe (save-excursion (ispell-get-word nil))))
+
+(defun endless/ispell-word-then-abbrev (p)
+  "Call `ispell-word', then create an abbrev for it.
+With prefix P, create local abbrev. Otherwise it will
+be global.
+If there's nothing wrong with the word at point, keep
+looking for a typo until the beginning of buffer. You can
+skip typos you don't want to fix with `SPC', and you can
+abort completely with `C-g'.
+
+URL `http://endlessparentheses.com/ispell-and-abbrev-the-perfect-auto-correct.html'
+Version 2016-01-20"
+  (interactive "P")
+  (let (bef aft)
+    (save-excursion
+      (while (if (setq bef (endless/simple-get-word))
+                 ;; Word was corrected or used quit.
+                 (if (ispell-word nil 'quiet)
+                     nil ; End the loop.
+                   ;; Also end if we reach `bob'.
+                   (not (bobp)))
+               ;; If there's no word at point, keep looking
+               ;; until `bob'.
+               (not (bobp)))
+        (backward-word)
+        (backward-char))
+      (setq aft (endless/simple-get-word)))
+    (if (and aft bef (not (equal aft bef)))
+        (let ((aft (downcase aft))
+              (bef (downcase bef)))
+          (define-abbrev
+            (if p local-abbrev-table global-abbrev-table)
+            bef aft)
+          (message "\"%s\" now expands to \"%s\" %sally"
+                   bef aft (if p "loc" "glob")))
+      (user-error "No typo at or before point"))))
+#+end_src
+
+[[http://endlessparentheses.com/ispell-and-apostrophes.html][Ispell and Apostrophes]]
+
+#+NAME: fix ispell typography issue
+#+begin_src emacs-lisp :tangle yes
+;;; Tell ispell.el that ’ can be part of a word.
+(setq ispell-local-dictionary-alist
+      `((nil "[[:alpha:]]" "[^[:alpha:]]"
+             "['\x2019]" nil ("-B") nil utf-8)))
+
+;;; Don't send ’ to the subprocess.
+(defun endless/replace-apostrophe (args)
+  (cons (replace-regexp-in-string
+         "’" "'" (car args))
+        (cdr args)))
+(advice-add #'ispell-send-string :filter-args
+            #'endless/replace-apostrophe)
+
+;;; Convert ' back to ’ from the subprocess.
+(defun endless/replace-quote (args)
+  (if (not (derived-mode-p 'org-mode))
+      args
+    (cons (replace-regexp-in-string
+           "'" "’" (car args))
+          (cdr args))))
+(advice-add #'ispell-parse-output :filter-args
+            #'endless/replace-quote)
+#+end_src
+
+[[http://pragmaticemacs.com/emacs/jump-back-to-previous-typo/][Jump back to previous typo. | Pragmatic Emacs]]
+
+#+begin_quote
+Flyspell offers the function flyspell-goto-next-error which moves the point forward to the next error, and is bound to C-, (although this keybinding is taken over in org-mode). However, I only want to move back to the previous error, but flyspell offers no function for this. This is easily fixed with a very slightly modified version of the code from this answer by hatschipuh on stackexchange. 
+
+This code jumps you to the end of the most recent misspelled word.
+#+end_quote
+
+#+NAME: flyspell-goto-previous-error
+#+begin_src emacs-lisp :tangle yes
+;; move point to previous error
+;; based on code by hatschipuh at
+;; http://emacs.stackexchange.com/a/14912/2017
+(defun flyspell-goto-previous-error (arg)
+  "Go to arg previous spelling error."
+  (interactive "p")
+  (while (not (= 0 arg))
+    (let ((pos (point))
+          (min (point-min)))
+      (if (and (eq (current-buffer) flyspell-old-buffer-error)
+               (eq pos flyspell-old-pos-error))
+          (progn
+            (if (= flyspell-old-pos-error min)
+                ;; goto beginning of buffer
+                (progn
+                  (message "Restarting from end of buffer")
+                  (goto-char (point-max)))
+              (backward-word 1))
+            (setq pos (point))))
+      ;; seek the next error
+      (while (and (> pos min)
+                  (let ((ovs (overlays-at pos))
+                        (r '()))
+                    (while (and (not r) (consp ovs))
+                      (if (flyspell-overlay-p (car ovs))
+                          (setq r t)
+                        (setq ovs (cdr ovs))))
+                    (not r)))
+        (backward-word 1)
+        (setq pos (point)))
+      ;; save the current location for next invocation
+      (setq arg (1- arg))
+      (setq flyspell-old-pos-error pos)
+      (setq flyspell-old-buffer-error (current-buffer))
+      (goto-char pos)
+      (if (= pos min)
+          (progn
+            (message "No more miss-spelled word!")
+            (setq arg 0))
+        (forward-word)))))
+
+(global-set-key (kbd "C-c ,") 'flyspell-goto-previous-error)
+#+end_src
+
+** comments                                                      :keybinding:
+
+[[http://endlessparentheses.com/implementing-comment-line.html][Implementing comment-line · Endless Parentheses]]
+
+#+begin_quote
+Why we don't have a comment/uncomment-line function is beyond me. While we fix that, might as well make it as complete as possible. 
+
+Short and sweet, isn't it? In analogy to M-;. I find C-; to be a great binding for it. This way I can quickly comment 3 lines by hitting C-3 C-;.
+
+Also, because it moves forward after commenting, you can conveniently do things like comment every other line by repeatedly doing C-; C-n.
+
+Update <2015-02-01 Sun>
+The previous version didn't quite work for negative prefix arguments, so I've updated the above snippet to fix that.
+
+Also, quite a few people requested (or proposed) a version which acts on region if active. I already use M-; for that (and I also its other modes of operation), but I can see why people would want that so I've added it below. It's similar to the one suggested by Kaushal Modi. 
+
+#+end_quote
+
+#+NAME: comment line or region
+#+begin_src emacs-lisp :tangle yes
+(defun endless/comment-line-or-region (n)
+  "Comment or uncomment current line and leave point after it.
+With positive prefix, apply to N lines including current one.
+With negative prefix, apply to -N lines above.
+If region is active, apply to active region instead."
+  (interactive "p")
+  (if (use-region-p)
+      (comment-or-uncomment-region
+       (region-beginning) (region-end))
+    (let ((range
+           (list (line-beginning-position)
+                 (goto-char (line-end-position n)))))
+      (comment-or-uncomment-region
+       (apply #'min range)
+       (apply #'max range)))
+    (forward-line 1)
+    (back-to-indentation)))
+
+(global-set-key (kbd "C-;") #'endless/comment-line)
+#+end_src
+
+** skeleton                                                        :template:
+
+#+NAME:
+#+begin_src emacs-lisp :tangle yes
+;; This turns on auto-insert-mode
+(auto-insert-mode)
+;; This turns off the prompt that auto-insert-mode asks before
+;; it actually inserts text/code for you
+(setq auto-insert-query nil)
+;; This is what you'll have inserted for a new .org file
+(define-skeleton my-org-defaults
+  "Org defaults I use"
+  nil
+  "# -*- mode: org; coding: utf-8 -*-\n"
+  ;; "#+TITLE: " str | (buffer-name) "\n"
+  ;; "#+AUTHOR: " (user-full-name) "\n"
+  ;; "#+EMAIL: paul@prjorgensen.com\n"
+  ;; "#+LANGUAGE: en\n"
+  ;; "#+Time-stamp: <>\n"
+  ;; "#+INFOJS_OPT: view:showall toc:t ltoc:t mouse:underline path:http://orgmode.org/org-info.js\n"
+  ;; "#+HTML_HEAD: <link rel=\"stylesheet\" type=\"text/css\" href=\"../css/notebook.css\" />\n"
+  ;; "#+LATEX_HEADER: \\usepackage{lmodern}\n"
+  ;; "#+LATEX_HEADER: \\usepackage[T1]{fontenc}\n"
+  ;; "#+OPTIONS: toc:nil num:0\n"
+  ;; "#+OPTIONS: H:2 num:nil toc:nil \\n:nil @:t ::t |:t ^:nil\n"
+  ;; "#+STARTUP: hideblocks\n"
+  ;; "#+CREATOR: \n"
+  ;; "#+DESCRIPTION: \n"
+  ;; "#+SELECT_TAGS: export\n"
+  ;; "#+EXCLUDE_TAGS: noexport\n"
+  ;; "#+KEYWORDS:\n"
+  "\n"
+  )
+;; This is how to tell auto-insert what to use for .org files
+(define-auto-insert "\\.org\\'" 'my-org-defaults)
+(define-auto-insert "\\.txt\\'" 'my-org-defaults)
+#+end_src
+
+** typography
+
+[[http://endlessparentheses.com/prettify-you-apostrophes.html][Prettify your Apostrophes]]
+
+#+NAME: Apostrophes
+#+begin_src emacs-lisp :tangle yes
+(define-key org-mode-map "'" #'endless/apostrophe)
+(eval-after-load 'markdown-mode
+  '(define-key markdown-mode-map "'"
+     #'endless/apostrophe))
+
+(defun endless/apostrophe (opening)
+  "Insert ’ in prose or `self-insert-command' in code.
+With prefix argument OPENING, insert ‘’ instead and
+leave point in the middle.
+Inside a code-block, just call `self-insert-command'."
+  (interactive "P")
+  (if (and (derived-mode-p 'org-mode)
+           (org-in-block-p '("src" "latex" "html")))
+      (call-interactively #'self-insert-command)
+    (if (looking-at "['’][=_/\\*]?")
+        (goto-char (match-end 0))
+      (if (null opening)
+          (insert "’")
+        (insert "‘’")
+        (forward-char -1)))))
+#+end_src
+
+[[http://endlessparentheses.com/prettify-your-quotation-marks.html][Prettify your Quotation Marks]]
+
+#+NAME: Quotation Marks
+#+begin_src emacs-lisp :tangle yes
+(define-key org-mode-map "\"" #'endless/round-quotes)
+(eval-after-load 'markdown-mode
+  '(define-key markdown-mode-map "\""
+     #'endless/round-quotes))
+
+(defun endless/round-quotes (italicize)
+  "Insert “” and leave point in the middle.
+With prefix argument ITALICIZE, insert /“”/ instead
+\(meant for org-mode).
+Inside a code-block, just call `self-insert-command'."
+  (interactive "P")
+  (if (and (derived-mode-p 'org-mode)
+           (org-in-block-p '("src" "latex" "html")))
+      (call-interactively #'self-insert-command)
+    (if (looking-at "”[/=_\\*]?")
+        (goto-char (match-end 0))
+      (when italicize
+        (if (derived-mode-p 'markdown-mode)
+            (insert "__")
+          (insert "//"))
+        (forward-char -1))
+      (insert "“”")
+      (forward-char -1))))
+#+end_src
+
+
+
+* functionality
+
+** xah stuff
+
+#+NAME: xah-cut-line-or-region
+#+begin_src emacs-lisp :tangle yes
+(defun xah-cut-line-or-region ()
+  "Cut current line, or text selection.
+When `universal-argument' is called first, cut whole buffer (respects `narrow-to-region').
+
+URL `http://ergoemacs.org/emacs/emacs_copy_cut_current_line.html'
+Version 2015-06-10"
+  (interactive)
+  (if current-prefix-arg
+      (progn ; not using kill-region because we don't want to include previous kill
+        (kill-new (buffer-string))
+        (delete-region (point-min) (point-max)))
+    (progn (if (use-region-p)
+               (kill-region (region-beginning) (region-end) t)
+             (kill-region (line-beginning-position) (line-beginning-position 2))))))
+#+end_src
+
+#+NAME: xah-copy-line-or-region
+#+begin_src emacs-lisp :tangle yes
+(defun xah-copy-line-or-region ()
+  "Copy current line, or text selection.
+When called repeatedly, append copy subsequent lines.
+When `universal-argument' is called first, copy whole buffer (respects `narrow-to-region').
+
+URL `http://ergoemacs.org/emacs/emacs_copy_cut_current_line.html'
+Version 2017-07-08"
+  (interactive)
+  (if current-prefix-arg
+      (progn
+        (kill-ring-save (point-min) (point-max))
+        (message "All visible buffer text copied"))
+    (if (use-region-p)
+        (progn
+          (kill-ring-save (region-beginning) (region-end))
+          (message "Active region copied"))
+      (if (eq last-command this-command)
+          (if (eobp)
+              (progn (message "empty line at end of buffer." ))
+            (progn
+              (kill-append "\n" nil)
+              (kill-append
+               (buffer-substring-no-properties (line-beginning-position) (line-end-position))
+               nil)
+              (message "Line copy appended")
+              (progn
+                (end-of-line)
+                (forward-char))))
+        (if (eobp)
+            (if (eq (char-before) 10 )
+                (progn (message "empty line at end of buffer." ))
+              (progn
+                (kill-ring-save (line-beginning-position) (line-end-position))
+                (end-of-line)
+                (message "line copied")))
+          (progn
+            (kill-ring-save (line-beginning-position) (line-end-position))
+            (end-of-line)
+            (forward-char)
+            (message "line copied")))))))
+#+end_src
+
+#+NAME: xah-paste-or-paste-previous
+#+begin_src emacs-lisp :tangle yes
+(defun xah-paste-or-paste-previous ()
+  "Paste. When called repeatedly, paste previous.
+This command calls `yank', and if repeated, call `yank-pop'.
+
+When `universal-argument' is called first with a number arg, paste that many times.
+
+URL `http://ergoemacs.org/emacs/emacs_paste_or_paste_previous.html'
+Version 2017-07-25"
+  (interactive)
+  (progn
+    (when (and delete-selection-mode (region-active-p))
+      (delete-region (region-beginning) (region-end)))
+    (if current-prefix-arg
+        (progn
+          (dotimes ($i (prefix-numeric-value current-prefix-arg))
+            (yank)))
+      (if (eq real-last-command this-command)
+          (yank-pop 1)
+        (yank)))))
+#+end_src
+
+#+NAME: xah-show-kill-ring
+#+begin_src emacs-lisp :tangle yes
+(defun xah-show-kill-ring ()
+  "Insert all `kill-ring' content in a new buffer.
+
+URL `http://ergoemacs.org/emacs/emacs_show_kill_ring.html'
+Version 2017-06-19"
+  (interactive)
+  (let (($buf (generate-new-buffer "untitled")))
+    (progn
+      (switch-to-buffer $buf)
+      (funcall 'fundamental-mode)
+      (setq buffer-offer-save t)
+      (dolist (x kill-ring )
+        (insert x "\n--------------------------------------------------\n\n"))
+      (goto-char (point-min)))))
+#+end_src
+
+* applications
+** ERC
+
+According to EmacsWiki there are three types of ERC modules.
+
+1. built-in and enabled
+2. built-in and disabled
+3. external
+
+Some of the external modules are available in ELPA and others are manual.
+
+*** init
+   
+ #+NAME: erc
+ #+BEGIN_SRC emacs-lisp :tangle yes
+(use-package erc
+  :config
+  (use-package erc-sasl
+    :load-path "~/.emacs.d/elisp/"
+    :config
+    (add-to-list 'erc-sasl-server-regexp-list ".*\\freenode.net")
+    (add-to-list 'erc-sasl-server-regexp-list ".*\\thinstack.net")
+    (add-to-list 'erc-sasl-server-regexp-list ".*\\chatrealm.net")
+    (add-to-list 'erc-sasl-server-regexp-list ".*")
+    )
+  (erc-scrolltobottom-mode)
+  (erc-add-scroll-to-bottom)
+  (setq
+   erc-flood-protect              nil
+   erc-format-nick-function      'erc-format-@nick   ; show user mode next to nick
+   erc-hide-list                 '("JOIN" "NICK" "PART" "QUIT" "MODE")
+   erc-input-line-position       -2     ; pin scroll to the buffer's bottom
+   erc-insert-timestamp-function 'erc-insert-timestamp-left
+   erc-interpret-mirc-color       t
+   erc-kill-buffer-on-part        t     ; Kill buffers for channels after /part
+   erc-kill-queries-on-quit       t     ; Kill buffers for private queries after quitting the server
+   erc-kill-server-buffer-on-quit t     ; Kill buffers for server messages after quitting the server
+   erc-nick                      "zenshinji"
+   erc-nick-uniquifier           "`"
+   erc-port                       6667
+   erc-prompt (lambda ()
+                (concat "[" (buffer-name) "]")
+                )
+   erc-prompt-for-nickserv-password nil
+   erc-server-auto-reconnect      t
+   erc-server-coding-system      '(utf-8 . utf-8) ; Set UTF-8
+   ;; erc-server-flood-penalty       1000000
+   erc-server-reconnect-attempts  3
+   erc-server-reconnect-timeout   60
+   erc-server-reconnect-timeout   30
+   erc-server-send-ping-interval  45
+   erc-server-send-ping-timeout   180
+   erc-spelling-mode              1
+   erc-timestamp-format          "%T "
+   erc-timestamp-only-if-changed-flag nil
+   erc-track-exclude-types       '("JOIN" "NICK" "PART" "QUIT" "MODE" "324" "329" "332" "333" "353" "477")
+   erc-try-new-nick-p             t
+   )
+  (add-hook 'erc-mode-hook
+            (lambda()
+              (linum-mode 0)
+              ;; 'erc-add-scroll-to-bottom
+              ;; 'erc-fill-disable
+              (set (make-local-variable 'scroll-conservatively) 100)
+              (erc-fill-disable)
+              (visual-line-mode 1)
+              (variable-pitch-mode t)
+              )
+            )
+  (add-hook 'erc-insert-post-hook 'erc-scroll-to-bottom)
+  )
+ #+END_SRC
+
+*** erc-login and erc-sasl
+
+    Override erc-login, enabling erc-sasl to function properly.
+
+#+NAME: erc-login
+#+BEGIN_SRC emacs-lisp :tangle yes
+;; authentication
+
+(defun erc-login ()
+  "Perform user authentication at the IRC server."
+  (erc-log (format "login: nick: %s, user: %s %s %s :%s"
+		   (erc-current-nick)
+		   (user-login-name)
+		   (or erc-system-name (system-name))
+		   erc-session-server
+		   erc-session-user-full-name))
+  (if erc-session-password
+      (erc-server-send (format "PASS %s" erc-session-password))
+    (message "Logging in without password"))
+  (when (and (featurep 'erc-sasl) (erc-sasl-use-sasl-p))
+    (erc-server-send "CAP REQ :sasl"))
+  (erc-server-send (format "NICK %s" (erc-current-nick)))
+  (erc-server-send
+   (format "USER %s %s %s :%s"
+	   ;; hacked - S.B.
+	   (if erc-anonymous-login erc-email-userid (user-login-name))
+	   "0" "*"
+	   erc-session-user-full-name))
+  (erc-update-mode-line))
+#+END_SRC
+
+*** Netsplit
+
+ Detects netsplits
+
+ #+NAME:
+ #+begin_src emacs-lisp  :tangle yes
+(use-package erc-netsplit
+  :defer t
+  :config
+  (erc-netsplit-mode t)
+  )
+ #+end_src
+
+*** Track
+
+ Track channel activity in the mode line.
+
+ #+NAME:
+ #+begin_src emacs-lisp  :tangle yes
+(use-package erc-track
+  :defer t
+  :config
+  (erc-track-mode t)
+  )
+ #+end_src
+
+*** Ring
+
+ Enables input history
+
+ #+NAME:
+ #+begin_src emacs-lisp :tangle yes
+(use-package erc-ring
+  :defer t
+  :config
+  (erc-ring-enable)
+  (add-to-list 'erc-modules 'ring)
+  )
+ #+end_src
+
+*** Services
+
+ Identify to Nickserv (IRC Services) automatically
+
+ #+NAME:
+ #+begin_src emacs-lisp :tangle yes
+(use-package erc-services
+  :defer t
+  :config
+  (add-to-list 'erc-modules 'services)
+  (erc-services-mode 1)
+  )
+ #+end_src
+
+*** Autoaway
+
+ Set away status automatically.
+
+ #+NAME:
+ #+begin_src emacs-lisp :tangle yes
+(use-package erc-autoaway
+  :defer t
+  :config
+  (add-to-list 'erc-modules 'autoaway)
+  (setq
+   erc-autoaway-idle-seconds 1800
+   erc-auto-discard-away     t
+   )
+  )
+ #+end_src
+
+*** Log
+
+ Save buffers in logs
+
+ #+NAME:
+ #+begin_src emacs-lisp :tangle yes
+(use-package erc-log
+  :defer t
+  :config
+  (add-to-list 'erc-modules 'log)
+  (erc-log-enable)
+  (setq
+   erc-generate-log-file-name-function 'erc-generate-log-file-name-short
+   erc-log-channels-directory "~/Dropbox/erc-logs/"   ;;default is C-c C-l saves to ~/logs/
+   erc-log-insert-log-on-open nil             ;;is on by default
+   erc-log-write-after-insert t
+   erc-log-write-after-send t
+   erc-save-buffer-on-part t                  ;;autosave log when /part or /quit
+   )
+  (if (not (file-exists-p erc-log-channels-directory))
+      (mkdir erc-log-channels-directory t)
+    )
+  ;; Truncate buffers so they don't hog core.
+  (setq erc-max-buffer-size 20000)
+  (defvar erc-insert-post-hook)
+  (add-hook 'erc-insert-post-hook 'erc-truncate-buffer)
+  (setq erc-truncate-buffer-on-save t)
+  )
+ #+end_src
+
+*** Join
+
+ Join channels automatically.
+
+ #+NAME:erc-join
+ #+begin_src emacs-lisp :tangle yes
+(use-package erc-join
+  :defer t
+  :config
+  (erc-autojoin-mode 1)
+  (setq
+   erc-autojoin-channels-alist
+   '(
+     (".*\\freenode.net"  "#erc" "#org-mode" "#emacs" "#gnus" "#ahk" "#misec")
+     (".*\\debian.org"    "#debian")
+     (".*\\oftc.net"      "#bitlbee")
+     (".*\\thinstack.net" "#frogpants")
+     (".*\\localhost"     "&gtalk" "#twitter_prjorg") ;;"#twitter_pvcsec")
+     (".*\\chatrealm.net" "#frogpants" "#live")
+     )
+   )
+  )
+ #+end_src
+
+*** Goodies
+
+ #+NAME:
+ #+begin_src emacs-lisp :tangle yes
+(use-package erc-goodies
+  :defer t
+  )
+ #+end_src
+
+*** Match
+
+ Highlight pals, fools, and other keywords in all instances of these words in the channel buffers. Also: if you are using track-modified-channels-mode, channels mentioning the keywords in them will appear in a difference face in your modeline.
+
+ #+NAME:
+ #+begin_src emacs-lisp :tangle yes
+(use-package erc-match
+  :defer t
+  :config
+    ;;; highlight differently when running the bitlbee command: blist
+  (setq
+   erc-keywords '(
+                  (".*Online.*" (:foreground "green" ))
+                  (".*Busy"     (:foreground "red"   ))
+                  (".*Away"     (:foreground "orange"))
+                  (".*Do not"   (:foreground "red"   ))
+                  (".*Idle"     (:foreground "orange"))
+                  ;; Above for bitlbee blist command.
+                  ("wanderlust" (:foreground "green" ))
+                  ("org-mode"   (:foreground "green" ))
+                  (" erc "      (:foreground "green" ))
+                  ("zenshinji"  (:foreground "red"   ))
+                  )
+   )
+  )
+ #+end_src
+
+*** Images
+
+ #+NAME: erc-image
+ #+begin_src emacs-lisp :tangle yes
+(use-package erc-image
+  :ensure t
+  :defer t
+  :config
+  (add-to-list 'erc-modules 'image)
+  (erc-update-modules)
+  (setq
+   erc-image-inline-rescale '32
+   )
+  )
+ #+end_src
+
+*** Highlighted nicks
+
+ #+BEGIN_SRC emacs-lisp :tangle yes
+(use-package erc-hl-nicks
+  :ensure t
+  :defer t
+  )
+ #+END_SRC
+
+*** Youtube
+
+ #+NAME:
+ #+begin_src emacs-lisp :tangle yes
+(use-package erc-youtube
+  :ensure t
+  :defer t
+  :config
+  (add-to-list 'erc-modules 'youtube)
+  (erc-update-modules)
+  (setq
+   erc-youtube-apiv3-key "AIzaSyAv0vJqSR7LOqmlwnAYz9Wxcvae4vDCB8g"
+   )
+  )
+ #+end_src
+
+*** Smileys
+
+ #+NAME:
+ #+begin_src emacs-lisp :tangle yes
+(use-package smiley
+  :defer t
+  :config
+  (add-to-list 'erc-modules 'smiley)
+  )
+ #+end_src
+
+*** imenu
+
+ #+NAME:
+ #+begin_src emacs-lisp :tangle yes
+(use-package erc-imenu
+  :defer t
+  :disabled t
+  )
+ #+end_src
+
+*** Freenode
+
+ #+NAME: irc-fn
+ #+begin_src emacs-lisp :tangle yes
+(defun irc-fn ()
+  "Connect to FreeNode IRC."
+  (interactive)
+  (erc-tls :server "irc.freenode.net"  :port 6697)
+  )
+ #+end_src
+
+ #+NAME:
+ #+begin_src emacs-lisp :tangle yes
+(defun irc-fn-windows ()
+  (interactive)
+  (select-frame (make-frame '((name . "Emacs Freenode IRC")
+ 			      (minibuffer . t))))
+  (split-window-horizontally)
+  (windmove-right)
+  (split-window-vertically)
+  (windmove-down)
+  (split-window-vertically)
+  (windmove-down)
+  (switch-to-buffer "#erc")
+  (windmove-up)
+  (switch-to-buffer "#gnus")
+  (windmove-up)
+  (switch-to-buffer "#org-mode")
+  (windmove-left)
+  (switch-to-buffer "#emacs")
+)
+ #+end_src
+
+*** Thinstack
+
+ #+NAME: irc-ts
+ #+begin_src emacs-lisp :tangle yes
+(defun irc-ts ()
+  "Connect to Thinstack IRC."
+  (interactive)
+  (erc-tls :server "irc.thinstack.net" :port 6697)
+  )
+ #+end_src
+
+*** Chatrealm
+
+ #+NAME: irc-cr
+ #+begin_src emacs-lisp :tangle yes
+(defun irc-cr ()
+  "Connect to Chatrealm IRC."
+  (interactive)
+  (erc-tls :server "irc.chatrealm.net" :port 6697)
+  )
+ #+end_src
+   
+*** BitlBee
+
+ #+NAME:
+ #+begin_src emacs-lisp :tangle yes
+(defun irc-bb ()
+  "Connect to BitlBee local IRC."
+  (interactive)
+  (erc :server "localhost" :port 6667 :nick "pjorgensen")
+  )
+ #+end_src
+
+*** Tweet
+   
+   #+NAME:
+   #+begin_src emacs-lisp :tangle yes
+(use-package erc-tweet
+  :ensure t
+  :defer t
+  :config
+  (add-to-list 'erc-modules 'tweet)
+  (erc-update-modules)
+  )
+   #+end_src
+   
+* modes
+
+** autohotkey mode
+
+  Check out [[http://xahlee.info/mswin/emacs_autohotkey_mode.html][ahk-mode at ergoemacs.org]]. Need to remember or find how to change the "Edit This Script" menu item to emacsclientw on Windows.
+
+#+NAME: xahk-mode
+#+BEGIN_SRC emacs-lisp :tangle yes
+(use-package xahk-mode
+  :ensure t
+  :mode ("\\.ahk\\'" . xahk-mode)
+  )
+#+END_SRC
+
+** fountain mode
+
+[[https://fountain.io/][Fountain | A markup language for screenwriting.]]
+
+In case I decide to write a screen play 😊
+
+#+NAME:
+#+begin_src emacs-lisp :tangle yes
+(use-package fountain-mode
+  :ensure t
+  )
+#+end_src
+
+** markdown
+
+*** init
+
+#+BEGIN_SRC  emacs-lisp :tangle yes
+  (use-package markdown-mode
+    :ensure t
+    :commands (markdown-mode gfm-mode)
+    :mode (("README\\.md\\'" . gfm-mode)
+           ("\\.md\\'" . markdown-mode)
+           ("\\.markdown\\'" . markdown-mode))
+    :init (setq markdown-command "multimarkdown"))
+#+END_SRC
+  
+*** markdown-mode-hooks
+
+#+NAME:
+#+begin_src emacs-lisp :tangle yes
+(add-hook 'markdown-mode-hook
+          (lambda()
+            (variable-pitch-mode t)
+            (visual-line-mode    1)
+            (flyspell-mode       1)
+            )
+          )
+#+end_src
+
+
+* secrets
+
+#+NAME:
+#+begin_src emacs-lisp :tangle yes
+(load "~/.emacs.secrets.gpg" t)
+#+end_src
+
+* zz timing end
+
+#+BEGIN_SRC emacs-lisp :tangle yes
+;;; Post initialization
+
+(when window-system
+  (let ((elapsed (float-time (time-subtract (current-time)
+					    emacs-start-time))))
+    (message "Loading %s...done (%.3fs)" load-file-name elapsed))
+  
+  (add-hook 'after-init-hook
+	    `(lambda ()
+	       (let ((elapsed (float-time (time-subtract (current-time)
+							 emacs-start-time))))
+		 (message "Loading %s...done (%.3fs) [after-init]"
+			  ,load-file-name elapsed)))
+	    t)
+  )
+#+END_SRC
+
+* Notes & todos
+
+  + Reassign “2C” two-column mode somewhere else
+  + Clean-up default C-x & C-c mappings to other places
+    + bind cut, copy, paste (cua-mode?)
+  + Key binding priorities
+    + <menu> is main leader
+    + <f2> for window and frame management
+    + <f9> for org-mode
+

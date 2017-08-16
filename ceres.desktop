@@ -1,0 +1,187 @@
+;; -*- mode: emacs-lisp; coding: emacs-mule; -*-
+;; --------------------------------------------------------------------------
+;; Desktop File for Emacs
+;; --------------------------------------------------------------------------
+;; Created Tue Aug 15 19:48:38 2017
+;; Desktop file format version 208
+;; Emacs version 25.2.1
+
+;; Global section:
+(setq desktop-saved-frameset [frameset 1 (22930 53638 802051 700000) (desktop . "208") "Paul@CERES" nil nil ((((font-backend uniscribe gdi) (font . "-outline-Courier New-normal-normal-normal-mono-27-*-*-*-c-*-iso8859-1") (border-width . 2) (internal-border-width . 0) (right-divider-width . 0) (bottom-divider-width . 0) (vertical-scroll-bars) (horizontal-scroll-bars) (foreground-color . "#839496") (background-color . "#002b36") (mouse-color . "black") (border-color . "black") (screen-gamma) (line-spacing) (left-fringe . 8) (right-fringe . 8) (alpha) (menu-bar-lines . 1) (tool-bar-lines . 0) (height . 55) (title) (icon-type) (auto-raise) (auto-lower) (cursor-type . bar) (scroll-bar-width . 0) (scroll-bar-height . 0) (fullscreen . maximized) (display-type . color) (background-mode . dark) (cursor-color . "#839496") (environment) (powerline-cache) (frameset--id . "98AF-3A29-E917-E062") (frameset--mini t . t) (modeline . t) (minibuffer . t) (unsplittable) (icon-name) (display . "w32") (explicit-name) (tool-bar-position . top) (visibility . t) (width . 170) (left + -13) (top + -13)) ((min-height . 8) (min-width . 20) (min-height-ignore . 6) (min-width-ignore . 6) (min-height-safe . 2) (min-width-safe . 4) (min-pixel-height . 240) (min-pixel-width . 320) (min-pixel-height-ignore . 180) (min-pixel-width-ignore . 96) (min-pixel-height-safe . 60) (min-pixel-width-safe . 64)) hc (pixel-width . 2736) (pixel-height . 1630) (total-width . 171) (total-height . 54) (normal-height . 1.0) (normal-width . 1.0) (combination-limit) (leaf (pixel-width . 1360) (pixel-height . 1630) (total-width . 85) (total-height . 54) (normal-height . 1.0) (normal-width . 0.5) (buffer "file storage.txt" (selected . t) (hscroll . 0) (fringes 8 8 nil) (margins nil) (scroll-bars nil 0 t nil 0 t) (vscroll . 0) (dedicated) (point . 3621) (start . 2820))) (vc (last . t) (pixel-width . 1376) (pixel-height . 1630) (total-width . 86) (total-height . 54) (normal-height . 1.0) (normal-width . 0.5) (combination-limit) (leaf (pixel-width . 1376) (pixel-height . 820) (total-width . 86) (total-height . 27) (normal-height . 0.5) (normal-width . 1.0) (buffer "Sync system.txt" (selected) (hscroll . 0) (fringes 8 8 nil) (margins nil) (scroll-bars nil 0 t nil 0 t) (vscroll . 0) (dedicated) (point . 2430) (start . 1894))) (leaf (last . t) (pixel-width . 1376) (pixel-height . 810) (total-width . 86) (total-height . 27) (normal-height . 0.5) (normal-width . 1.0) (buffer "beale.wordlist.asc" (selected) (hscroll . 0) (fringes 8 8 nil) (margins nil) (scroll-bars nil 0 t nil 0 t) (vscroll . 0) (dedicated) (point . 1) (start . 1))))))])
+(setq desktop-missing-file-warning nil)
+(setq tags-file-name nil)
+(setq tags-table-list nil)
+(setq search-ring '("q"))
+(setq regexp-search-ring '("hydr" "TITLE" "flyspe" "templa" "tok" "toke"))
+(setq register-alist nil)
+(setq file-name-history '("c:/Users/Paul/Downloads/beale.wordlist.asc" "c:/Users/Paul/Dropbox/Inbox/Sync system.txt" "c:/Users/Paul/Dropbox/Inbox/philosophy.txt" "c:/Users/Paul/Dropbox/Inbox/file storage.txt" "c:/Users/Paul/Desktop/org2blog.backtrace.txt" "c:/Users/Paul/.authinfo.gpg" "c:/Users/Paul/org2blog.backtrace.txt" "c:/Users/Paul/.emacs.d/init.el" "~/.emacs.d/" "c:/Users/Paul/Dropbox/20170720.emacs/my_init.org" "c:/Users/Paul/.emacs.d/my_init.org" "c:/Users/Paul/.emacs.secrets.gpg" "c:/Users/Paul/Dropbox/podcast.txt" "~/.emacs.d/../Dropbox/org/PRJ_20170810.txt" "c:/Users/Paul/Dropbox/org/PRJ_20170810.txt" "~/.emacs.d/" "~/.emacs.d/my_init.el" "~/.emacs.d/my_init.org"))
+
+;; Buffer section -- buffers listed in same order as in buffer list:
+(desktop-create-buffer 208
+  "c:/Users/Paul/Dropbox/Inbox/file storage.txt"
+  "file storage.txt"
+  'org-mode
+  '(abbrev-mode visual-line-mode override-global-mode adaptive-wrap-prefix-mode beacon-mode which-key-mode anzu-mode artbollocks-mode flyspell-mode buffer-face-mode)
+  3621
+  '(3011 nil)
+  nil
+  nil
+  '((buffer-file-coding-system . utf-8-dos) (case-fold-search . t) (truncate-lines))
+  '((mark-ring (3151 1448 1410 1046 837 100 105 340 405 477 651 423 566 161 652 3621))))
+
+(desktop-create-buffer 208
+  "c:/Users/Paul/Dropbox/Inbox/Sync system.txt"
+  "Sync system.txt"
+  'org-mode
+  '(abbrev-mode visual-line-mode override-global-mode adaptive-wrap-prefix-mode beacon-mode which-key-mode anzu-mode artbollocks-mode flyspell-mode buffer-face-mode)
+  2429
+  '(2019 nil)
+  nil
+  nil
+  '((buffer-file-coding-system . utf-8-dos) (case-fold-search . t) (truncate-lines))
+  '((mark-ring (1894 1536 1484 1457 1427 1427 673 640 508 475 538 416 538 583 583 2400))))
+
+(desktop-create-buffer 208
+  "c:/Users/Paul/Downloads/beale.wordlist.asc"
+  "beale.wordlist.asc"
+  'fundamental-mode
+  '(abbrev-mode override-global-mode beacon-mode which-key-mode anzu-mode)
+  1
+  '(nil nil)
+  nil
+  nil
+  '((buffer-file-coding-system . utf-8-unix))
+  '((mark-ring nil)))
+
+(desktop-create-buffer 208
+  "c:/Users/Paul/Dropbox/Inbox/philosophy.txt"
+  "philosophy.txt"
+  'org-mode
+  '(abbrev-mode visual-line-mode override-global-mode adaptive-wrap-prefix-mode beacon-mode which-key-mode anzu-mode artbollocks-mode flyspell-mode buffer-face-mode)
+  37
+  '(37 nil)
+  nil
+  nil
+  '((buffer-file-coding-system . utf-8) (case-fold-search . t) (truncate-lines))
+  '((mark-ring nil)))
+
+(desktop-create-buffer 208
+  "c:/Users/Paul/.emacs.d/my_init.org"
+  "my_init.org"
+  'org-mode
+  '(abbrev-mode visual-line-mode override-global-mode adaptive-wrap-prefix-mode beacon-mode which-key-mode anzu-mode artbollocks-mode flyspell-mode buffer-face-mode)
+  53814
+  '(44527 nil)
+  nil
+  nil
+  '((buffer-file-coding-system . utf-8-dos) (case-fold-search . t) (truncate-lines))
+  '((mark-ring (27192 27376 27303 27239 27167 27131 27090 27038 44476 73450 72255 72256 75749 76770 15403 100308))))
+
+(desktop-create-buffer 208
+  "c:/Users/Paul/gtd/inbox.org"
+  "inbox.org"
+  'org-mode
+  '(abbrev-mode visual-line-mode override-global-mode adaptive-wrap-prefix-mode beacon-mode which-key-mode anzu-mode artbollocks-mode flyspell-mode buffer-face-mode)
+  3785
+  '(652 nil)
+  nil
+  nil
+  '((buffer-file-coding-system . utf-8-dos) (case-fold-search . t) (truncate-lines))
+  '((mark-ring (788 240 678 678 651 662 674 678 678 240 44 784 nil 3785))))
+
+(desktop-create-buffer 208
+  "c:/Users/Paul/OneDrive/Documents/autohotkey.ahk"
+  "autohotkey.ahk"
+  'xahk-mode
+  '(abbrev-mode override-global-mode rainbow-delimiters-mode beacon-mode which-key-mode anzu-mode flyspell-mode)
+  4020
+  '(952 nil)
+  nil
+  nil
+  '((buffer-file-coding-system . utf-8-dos))
+  '((mark-ring (735 104 523 779 551 735 721 952 4020))))
+
+(desktop-create-buffer 208
+  "c:/Users/Paul/gtd/wunderlist.org"
+  "wunderlist.org"
+  'org-mode
+  '(abbrev-mode visual-line-mode override-global-mode adaptive-wrap-prefix-mode beacon-mode which-key-mode anzu-mode artbollocks-mode flyspell-mode buffer-face-mode)
+  1
+  '(nil nil)
+  nil
+  nil
+  '((buffer-file-coding-system . utf-8-dos) (truncate-lines))
+  '((mark-ring nil)))
+
+(desktop-create-buffer 208
+  "c:/Users/Paul/OneDrive/Documents/GitHub/org2blog/org2blog.el"
+  "org2blog.el"
+  'emacs-lisp-mode
+  '(abbrev-mode override-global-mode rainbow-delimiters-mode beacon-mode which-key-mode anzu-mode flyspell-mode)
+  28761
+  '(9144 nil)
+  nil
+  nil
+  '((buffer-file-coding-system . utf-8-dos))
+  '((mark-ring (11227 12685 14365 16144 22894 31139 32859 39712 43580 39404 36205 32328 28594 25095 21576 7116))))
+
+(desktop-create-buffer 208
+  "c:/Users/Paul/Dropbox/20170720.emacs/my_init.org"
+  "my_init.org"
+  'org-mode
+  '(abbrev-mode visual-line-mode override-global-mode adaptive-wrap-prefix-mode beacon-mode which-key-mode anzu-mode artbollocks-mode flyspell-mode buffer-face-mode)
+  69478
+  '(58130 nil)
+  nil
+  nil
+  '((buffer-file-coding-system . utf-8-dos) (truncate-lines))
+  '((mark-ring (1 1 69478))))
+
+(desktop-create-buffer 208
+  "c:/Users/Paul/Dropbox/podcast.txt"
+  "podcast.txt"
+  'org-mode
+  '(abbrev-mode visual-line-mode override-global-mode adaptive-wrap-prefix-mode beacon-mode which-key-mode anzu-mode artbollocks-mode flyspell-mode buffer-face-mode)
+  1080
+  '(952 nil)
+  nil
+  nil
+  '((buffer-file-coding-system . utf-8-dos) (truncate-lines))
+  '((mark-ring (882 882 1079 1036 1079 754 713 952 678 841 841 760 677 677 582 1080))))
+
+(desktop-create-buffer 208
+  "c:/Users/Paul/Dropbox/org/PRJ_20170810.txt"
+  "PRJ_20170810.txt"
+  'org-mode
+  '(abbrev-mode visual-line-mode override-global-mode adaptive-wrap-prefix-mode beacon-mode which-key-mode anzu-mode artbollocks-mode flyspell-mode buffer-face-mode org2blog/wp-mode)
+  1432
+  '(1432 nil)
+  nil
+  nil
+  '((buffer-file-coding-system . utf-8-dos) (truncate-lines))
+  '((mark-ring (1322 1228 542 531 165 183 122 489 530 542 542 600 177 602 833 645))))
+
+(desktop-create-buffer 208
+  "c:/Users/Paul/.emacs.d/CERES.el"
+  "CERES.el"
+  'emacs-lisp-mode
+  '(abbrev-mode override-global-mode rainbow-delimiters-mode beacon-mode which-key-mode anzu-mode flyspell-mode)
+  1189
+  '(1189 nil)
+  nil
+  nil
+  '((buffer-file-coding-system . utf-8-dos))
+  '((mark-ring (1189))))
+
+(desktop-create-buffer 208
+  nil
+  ".emacs.d"
+  'dired-mode
+  '(abbrev-mode override-global-mode beacon-mode which-key-mode anzu-mode)
+  378
+  '(381 nil)
+  t
+  '("c:/Users/Paul/.emacs.d/")
+  nil
+  '((mark-ring (384 387 390 393))))
+
