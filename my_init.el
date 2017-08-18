@@ -1,105 +1,3 @@
-# -*- mode: org; coding: utf-8 -*-
-#+TITLE: Emacs Packages Initialization
-#+AUTHOR: Paul Jorgensen
-#+EMAIL: paul@prjorgensen.com
-#+LANGUAGE: en
-#+Time-stamp: <2017-07-24 04:26:05 Paul>
-#+INFOJS_OPT: view:showall toc:t ltoc:t mouse:underline path:http://orgmode.org/org-info.js
-#+HTML_HEAD: <link rel="stylesheet" type="text/css" href="../css/notebook.css" />
-#+LATEX_HEADER: \usepackage{lmodern}
-#+LATEX_HEADER: \usepackage[T1]{fontenc}
-#+OPTIONS: toc:nil num:0
-#+OPTIONS: H:2 num:nil toc:nil \n:nil @:t ::t |:t ^:nil
-#+STARTUP: hideblocks
-#+CREATOR: 
-#+DESCRIPTION: My emacs initialization file
-#+SELECT_TAGS: export
-#+EXCLUDE_TAGS: noexport
-#+KEYWORDS: literate programming, reproducible research, programming language, lisp, elisp, ide, emacs, babel, org-mode
-
-* OS
-
-** Windows 10
-
-*** TODO [[http://www.msys2.org/][MSYS2 homepage]]
-
-
-   Preparing a Windows box for the best Emacs experience is a bit of a journey.
-
-   Here is how I do it. I will eventually make this a PowerShell script to automate as much as possible.
-
-*** HOME, PATH, and other environment variables
-
-    I make my %HOME% directory equal to %USERPROFILE%. Hit the Windows key and type “environment”, which should bring up the option for Environment Variables.
-
-    I add %HOME%/bin and %HOME%/wbin to the PATH at the end.
-
-    I change %TMP% to point to %HOME%/tmp
-
-*** Emacs
-
-    I get the standard Gnu Emacs and extract it to %HOME%, which will automatically crate several of the directories mentioned in the next section
-
-*** Directories
-
-    I make a bin, etc, libexec, share, tmp, var, and wbin directores.
-
-    - bin: binaries. In addition to Emacs binaries I place other *nix like tools in here, such as ispell
-    - etc: configuration files
-    - libexec: libraries
-    - share: documentation and examples
-    - tmp: temporary files
-    - var: variable files like IO
-    - wbin: windows binaries like SysInternals
-    - .emacs.d: Emacs configuration
-
-*** Tools & Utilities
-
-**** GPG4Win
-
-Need this for handling encrypted files like .authinfo.gpg and secret.org.gpg.
-
-**** GIMP
-
-Some graphics libraries Emacs looks for are included in GIMP for Win32.
-
-**** 7-zip
-
-
-
-**** Github
-
-All the git commands I need are included in the command line bits. Please make sure you select them for install.
-
-**** Textexpander
-
-I use Textexpander to keep my general use keyboard shortcuts in sync between Mac & Windows and in all apps. Anything Emacs specific I keep in the common abbrev file or in my_init.org.
-
-**** Other tools
-
-***** Mingw32
-
-** macOS (OS X)
-
-   There are several customizations in here for Mac. I like what Aquamacs is doing on Mac, though it crashed on me regularly. I liberally crib from their customizations for my Mac config.
-
-   I used Mac Ports version of emacs-app. Mac Ports requires XCode and the command line utilities.
-
-   Make sure GPG is installed via MacGPG. change the setting for the executable to enable encrypting and decrypting automatically.
-
-   Disable brain-dead C-space input source switching capability in macOS Preferences - Keyboard - Shortcuts - Inpiut Sources.
-
-   Make sure to set up Keyboard Maestro to apply Opt-¥ to the _ key: (JIS Underscore) to simulate (⌥ JIS Yen)
-
-This is a test
-
-
-* Init
-
-Here are the header bits
-
-#+NAME: header
-#+BEGIN_SRC emacs-lisp :tangle yes
 ;;; -*- mode: emacs-lisp; coding: utf-8 -*-
 ;;; Title: my_init.el --- Where the magic begins
 ;;; Author: Paul R. Jorgensen
@@ -108,53 +6,32 @@ Here are the header bits
 ;;; Time-stamp: <2017-07-08 20:18:32 paulj>
 ;;; Purpose: Set up my emacs environment
 
-#+END_SRC
-
-Speed up start
-
-#+BEGIN_SRC emacs-lisp :tangle yes
 (add-hook 'after-init-hook (lambda () (setq gc-cons-threshold 800000)))
-#+END_SRC
 
-From here, let's time how long it takes Emacs to launch so we can tweak & optimize.
-
-#+BEGIN_SRC emacs-lisp :tangle yes
 (defconst emacs-start-time (current-time))
 (unless noninteractive
   (message "Loading %s..." load-file-name))
-#+END_SRC
 
-Set up debugging, activating on keystroke but otherwise disabled
+(setq
+ debug-on-error     nil
+ debug-on-signal    nil
+ debug-on-quit      nil
+ )
 
-#+BEGIN_SRC emacs-lisp :tangle yes
-  (setq
-   debug-on-error     nil
-   debug-on-signal    nil
-   debug-on-quit      nil
-   )
-
-  ;;; http://www.youtube.com/watch?v=RvPFZL6NJNQ
-  (global-set-key (kbd "C-c C-d")
-                  (lambda () (interactive)
-                    (setq debug-on-error (if debug-on-error nil t))
-                    (message (format "debug-on-error : %s" debug-on-error))
-                    )
+;;; http://www.youtube.com/watch?v=RvPFZL6NJNQ
+(global-set-key (kbd "C-c C-d")
+                (lambda () (interactive)
+                  (setq debug-on-error (if debug-on-error nil t))
+                  (message (format "debug-on-error : %s" debug-on-error))
                   )
-#+END_SRC
+                )
 
-Set the coding to UTF-8 here to make sure everything after has it set.
-Do this in as many ways as possible here to make sure it's reflected
-properly everywhere.
-
-#+BEGIN_SRC emacs-lisp :tangle yes
 (setq
  coding-system-for-read                  'utf-8
  coding-system-for-write                 'utf-8
 )
 (prefer-coding-system                    'utf-8)
-#+END_SRC
 
-#+BEGIN_SRC emacs-lisp :tangle yes
 (setq dotfiles-dir (file-name-directory
                     (or
                      (buffer-file-name)
@@ -162,57 +39,25 @@ properly everywhere.
                     )
       )
 
-#+END_SRC
-
-from http://emacsblog.org/2008/12/06/quick-tip-detaching-the-custom-file/
-from https://github.com/technomancy/emacs-starter-kit/blob/master/init.el
-Separate custom file for each host, placed in .emacs.d
-
-#+BEGIN_SRC emacs-lisp :tangle yes
 (setq custom-file (concat user-emacs-directory (car (split-string (system-name) "\\.")) ".el"))
 (load custom-file 'noerror)
-#+END_SRC
 
-Make interface tweaks
-
-#+NAME: tool-bar-mode
-#+BEGIN_SRC emacs-lisp :tangle yes
 (when (functionp 'tool-bar-mode)
   (tool-bar-mode -1)
   )
-#+END_SRC
 
-#+NAME: scroll-bar-mode
-#+BEGIN_SRC emacs-lisp :tangle yes
 (when (function 'scroll-bar-mode)
   (scroll-bar-mode -1)
   )
-#+END_SRC
 
-#+NAME: menu-bar-mode
-#+BEGIN_SRC emacs-lisp :tangle no
-  (when (function 'menu-bar-mode)
-    (menu-bar-mode -1)
-    )
-#+END_SRC
-
-Turn on the I-bar cursor and disable blinking
-
-#+BEGIN_SRC emacs-lisp :tangle yes
 (modify-all-frames-parameters (list (cons 'cursor-type 'bar)))
 (when (functionp 'blink-cursor-mode)
   (blink-cursor-mode -1)
   )
-#+END_SRC
 
-Get some column and row numbering
-
-#+BEGIN_SRC emacs-lisp :tangle yes
 (line-number-mode   1)
 (column-number-mode 1)
-#+END_SRC
 
-#+BEGIN_SRC emacs-lisp :tangle yes
 (setq
  initial-scratch-message ""
  inhibit-startup-message t
@@ -246,29 +91,27 @@ Get some column and row numbering
  inhibit-startup-echo-area-message user-login-name
  initial-major-mode 'org-mode
  )
-#+END_SRC
 
-** yes-or-no
-
-[[http://pragmaticemacs.com/emacs/make-all-prompts-y-or-n/][Make all prompts y or n | Pragmatic Emacs]]
-
-#+begin_quote
-Emacs prompts you at various times to answer yes or no to something. If you add the following to your emacs config file, you will only have to hit y or n saving you countless seconds!
-
-This basically aliases the built in “yes or no” prompt function to the built in “y or n” prompt function so that the latter is always used.
-#+end_quote
-
-#+NAME:
-#+begin_src emacs-lisp :tangle yes
 ;; change all prompts to y or n
 (fset 'yes-or-no-p 'y-or-n-p)
-#+end_src
 
+(use-package auth-source
+  :defer t
+  :config
+  (setq
+   auth-sources '(
+                  ;; default
+                  ;; "secrets:session"
+                  ;; "secrets:Login"
+                  "~/.authinfo.gpg"
+                  "~/.authinfo"
+                  "~/.netrc"
+                  )
+   epa-file-cache-passphrase-for-symmetric-encryption t
+   auth-source-debug 'trivia
+   )
+  )
 
-** error handling
-
-#+NAME:
-#+begin_src emacs-lisp :tangle yes
 (defun ignore-error-wrapper (fn)
   "Funtion return new function that ignore errors.
    The function wraps a function with `ignore-errors' macro."
@@ -277,19 +120,11 @@ This basically aliases the built in “yes or no” prompt function to the built
       (interactive)
       (ignore-errors
         (funcall fn)))))
-#+end_src
 
-* package system
-
-#+NAME: prefer newer packages than their elc counterparts
-#+BEGIN_SRC emacs-lisp :tangle yes
 (setq
  load-prefer-newer t
  )
-#+END_SRC
 
-#+NAME: package.el
-#+BEGIN_SRC emacs-lisp :tangle yes
 (require 'package)
 
 (add-to-list 'package-archives '("org"          . "http://orgmode.org/elpa/") t)
@@ -312,18 +147,10 @@ This basically aliases the built in “yes or no” prompt function to the built
   )
 (setq package-check-signature nil)
 (package-initialize)                ;; Initialize & Install Package
-#+END_SRC
 
-#+NAME: Common LISP
-#+BEGIN_SRC emacs-lisp :tangle yes
 (require 'cl)
 (require 'cl-lib)
-#+END_SRC
 
-add ~/.emacs.d/elisp and all subdirectories to the load path for downloaded packages
-
-#+NAME: edit load path to add elisp/
-#+BEGIN_SRC emacs-lisp :tangle yes
 (add-to-list 'load-path (concat dotfiles-dir "elisp/"))
 (let ((default-directory (concat dotfiles-dir "elisp/"))
       (normal-top-level-add-to-load-path '("."))
@@ -334,89 +161,39 @@ add ~/.emacs.d/elisp and all subdirectories to the load path for downloaded pack
 (unless package-archive-contents    ;; Refresh the packages descriptions
   (package-refresh-contents))
 (setq package-load-list '(all))     ;; List of packages to load
-#+END_SRC
 
-Bootstrap `use-package'
-
-#+NAME: use-package
-#+BEGIN_SRC emacs-lisp :tangle yes
 ;; (package-refresh-contents)
 (unless (package-installed-p 'use-package)
   (package-install 'use-package)
   )
 (eval-when-compile
   (require 'use-package))
-#+END_SRC
 
-#+NAME: configure use-package
-#+BEGIN_SRC emacs-lisp :tangle yes
 (setq
  use-package-verbose t
  )
-#+END_SRC
 
-Bootstrap diminish
-
-#+NAME: diminish
-#+BEGIN_SRC emacs-lisp :tangle yes
 ;;; Bootstrap `diminish'
 (unless (package-installed-p 'diminish)
   (package-install 'diminish)
   )
 (eval-when-compile
   (require 'diminish))
-#+END_SRC
 
-Bootstrap bind-key
-
-#+BEGIN_SRC emacs-lisp :tangle yes
 ;;; Bootstrap `bind-key'
 (unless (package-installed-p 'bind-key)
   (package-install 'bind-key)
   )
 (eval-when-compile
   (require 'bind-key))
-#+END_SRC
 
-#+BEGIN_SRC emacs-lisp :tangle yes
 (setq use-package-verbose t)
-#+END_SRC
 
-* authentication & encryption
-
-#+NAME: auth-source
-#+begin_src emacs-lisp :tangle yes
-(use-package auth-source
-  :defer t
-  :config
-  (setq
-   auth-sources '(
-                  ;; default
-                  ;; "secrets:session"
-                  ;; "secrets:Login"
-                  "~/.authinfo.gpg"
-                  "~/.authinfo"
-                  "~/.netrc"
-                  )
-   epa-file-cache-passphrase-for-symmetric-encryption t
-   auth-source-debug 'trivia
-   )
-  )
-#+end_src
-
-
-* paradox                                                :private:keybinding:
-
-#+NAME: async
-#+begin_src emacs-lisp :tangle yes
 (use-package async
   :ensure t
   :defer t
 )
-#+end_src
 
-#+NAME: paradox
-#+BEGIN_SRC emacs-lisp :tangle yes
 (use-package paradox
   :ensure t
   :defer t
@@ -429,97 +206,7 @@ Bootstrap bind-key
   ("H-p"   . paradox-list-packages)
   ("C-c p" . paradox-list-packages)
   )
-#+END_SRC
 
-* ergoemacs                                             :keybinding:disabled:
-
-#+NAME: ergoemacs-layout-jp-SP4-en
-#+begin_src emacs-lisp :tangle no
-(defvar ergoemacs-layout-jp-SP4-en
-  '("" "" "1" "2" "3" "4" "5" "6" "7" "8" "9" "0" "-" "^" "¥"
-    "" ""  "q" "w" "e" "r" "t" "y" "u" "i" "o" "p" "@" "[" ""
-    "" ""  "a" "s" "d" "f" "g" "h" "j" "k" "l" ";" ":" "]" ""
-    "" ""  "z" "x" "c" "v" "b" "n" "m" "," "." "/" "\\" "" ""
-    ;; Shifted
-    "" "" "!" "\"" "#" "$" "%" "&" "\'" "(" ")" "0" "=" "~" "|"
-    "" ""  "Q" "W" "E" "R" "T" "Y" "U" "I" "O" "P" "`" "{" ""
-    "" ""  "A" "S" "D" "F" "G" "H" "J" "K" "L" "+" "*" "}" ""
-    "" ""  "Z" "X" "C" "V" "B" "N" "M" "<" ">" "?" "_" "" "")
-  "JP English/Romaji QWERTY SP4 Keyboard")
-#+end_src
-
-#+NAME: ergoemacs-layout-jp-mba-en
-#+begin_src emacs-lisp :tangle no
-(defvar ergoemacs-layout-jp-mba-en
-  '("" "" "1" "2" "3" "4" "5" "6" "7" "8" "9" "0" "-" "^" "¥"
-    "" ""  "q" "w" "e" "r" "t" "y" "u" "i" "o" "p" "@" "[" ""
-    "" ""  "a" "s" "d" "f" "g" "h" "j" "k" "l" ";" ":" "]" ""
-    "" ""  "z" "x" "c" "v" "b" "n" "m" "," "." "/" "_" "" ""
-    ;; Shifted
-    "" "" "!" "\"" "#" "$" "%" "&" "\'" "(" ")" "0" "=" "~" "|"
-    "" ""  "Q" "W" "E" "R" "T" "Y" "U" "I" "O" "P" "`" "{" ""
-    "" ""  "A" "S" "D" "F" "G" "H" "J" "K" "L" "+" "*" "}" ""
-    "" ""  "Z" "X" "C" "V" "B" "N" "M" "<" ">" "?" "_" "" "")
-  "JP English/Romaji QWERTY MacBook Air Keyboard")
-#+end_src
-
-#+NAME: ergoemacs-mode
-#+begin_src emacs-lisp :tangle no
-  (use-package ergoemacs-mode
-    :ensure t
-    ;; :init
-    ;; (defvar ergoemacs-layout-jp-mac-en
-    ;;   '("" "" "1" "2" "3" "4" "5" "6" "7" "8" "9" "0" "-" "^" "¥"
-    ;;     "" ""  "q" "w" "e" "r" "t" "y" "u" "i" "o" "p" "@" "[" ""
-    ;;     "" ""  "a" "s" "d" "f" "g" "h" "j" "k" "l" ";" ":" "]" ""
-    ;;     "" ""  "z" "x" "c" "v" "b" "n" "m" "," "." "/" "\\" "" ""
-    ;;     ;; Shifted
-    ;;     "" "" "!" "\"" "#" "$" "%" "&" "\'" "(" ")" "0" "=" "~" "|"
-    ;;     "" ""  "Q" "W" "E" "R" "T" "Y" "U" "I" "O" "P" "`" "{" ""
-    ;;     "" ""  "A" "S" "D" "F" "G" "H" "J" "K" "L" "+" "*" "}" ""
-    ;;     "" ""  "Z" "X" "C" "V" "B" "N" "M" "<" ">" "?" "_" "" "")
-    ;;   "JP English/Romaji QWERTY Mac Keyboard")
-    :config
-    (setq
-     ergoemacs-theme                  nil  ;; Uses Standard Ergoemacs keyboard theme
-     ergoemacs-keyboard-layout        "jp-SP4-en" ;; Assumes QWERTY keyboard layout
-     ergoemacs-ctrl-c-or-ctrl-x-delay 1
-     )
-    )
-
-#+end_src
-  
-#+NAME: F16-19 key translation maps
-#+begin_src emacs-lisp :tangle no
-;; (define-key key-translation-map (kbd "A-h") 'event-apply-hyper-modifier)
-;; (define-key key-translation-map (kbd "<f19>") 'event-apply-meta-modifier)
-;; (define-key key-translation-map (kbd "<f18>") 'event-apply-control-modifier)
-;; (define-key key-translation-map (kbd "<f17>") 'event-apply-alt-modifier)
-;; (define-key key-translation-map (kbd "<f16>") 'event-apply-super-modifier)
-
-;;; f21 - f24 don't work
-;;; f13 is set for <menu>
-;;; f14 - f15 change screen brightness for some reason
-;;; f20 should work but triggers set-mark-command
-;;; <app> triggers print functions
-
-#+end_src
-
-* keyboard
-
-#+NAME: w32 keys
-#+begin_src emacs-lisp :tangle no
-(setq
- w32-pass-rwindow-to-system nil
- w32-pass-apps-to-system nil
- w32-rwindow-modifier 'alt ; Right Windows key
- w32-lwindows-modifier 'super
- w32-apps-modifier 'hyper
- )
-#+end_src
-
-#+NAME: menu key mapping for ~Hyper~ & Hydra
-#+begin_src emacs-lisp :tangle yes
 ;; on Linux, the menu/apps key syntax is <menu>
 ;; on Windows, the menu/apps key syntax is <apps>
 ;; make the syntax equal
@@ -568,12 +255,7 @@ Bootstrap bind-key
 
 ;; make the menu key as leader key
 (global-set-key (kbd "<menu>") 'my-leader-key-map)
-#+end_src
 
-** hydra
-
-#+NAME: package_hydra
-#+begin_src emacs-lisp :tangle yes
 (use-package hydra
   :ensure t
   :config
@@ -581,50 +263,41 @@ Bootstrap bind-key
    hydra-is-helpful t
    )
   )
-#+end_src
 
-#+NAME: package_hydra_examples
-#+begin_src emacs-lisp :tangle yes
 (use-package hydra-examples
 )
-#+end_src
 
-#+NAME: hydra-org-template
-#+begin_src emacs-lisp :tangle yes
-  (defhydra hydra-org-template (:color blue :hint nil)
-    "
-   _c_enter  _q_uote     _e_macs-lisp    _L_aTeX:
-   _l_atex   _E_xample   _p_erl          _i_ndex:
-   _a_scii   _v_erse     _P_erl tangled  _I_NCLUDE:
-   _s_rc     _n_ote      plant_u_ml      _H_TML:
-   _h_tml    ^ ^         ^ ^             _A_SCII:
+(defhydra hydra-org-template (:color blue :hint nil)
   "
-      ("s" (hot-expand "<s"))
-      ("E" (hot-expand "<E"))
-      ("q" (hot-expand "<q"))
-      ("v" (hot-expand "<v"))
-      ("n" (hot-expand "<not"))
-      ("c" (hot-expand "<c"))
-      ("l" (hot-expand "<l"))
-      ("h" (hot-expand "<h"))
-      ("a" (hot-expand "<a"))
-      ("L" (hot-expand "<L"))
-      ("i" (hot-expand "<i"))
-      ("e" (hot-expand "<e")) ; "<s" "emacs-lisp :tangle yes"))
-      ("p" (hot-expand "<s" "perl"))
-      ("u" (hot-expand "<s" "plantuml :file CHANGE.png"))
-      ("P" (hot-expand "<s" "perl" ":results output :exports both :shebang \"#!/usr/bin/env perl\"\n"))
-      ("I" (hot-expand "<I"))
-      ("H" (hot-expand "<H"))
-      ("A" (hot-expand "<A"))
-      ("<" self-insert-command "ins")
-      ("o" nil "quit")
-      ("/" hydra-org-template/body "hint")
-      )
-#+END_SRC
+ _c_enter  _q_uote     _e_macs-lisp    _L_aTeX:
+ _l_atex   _E_xample   _p_erl          _i_ndex:
+ _a_scii   _v_erse     _P_erl tangled  _I_NCLUDE:
+ _s_rc     _n_ote      plant_u_ml      _H_TML:
+ _h_tml    ^ ^         ^ ^             _A_SCII:
+"
+    ("s" (hot-expand "<s"))
+    ("E" (hot-expand "<E"))
+    ("q" (hot-expand "<q"))
+    ("v" (hot-expand "<v"))
+    ("n" (hot-expand "<not"))
+    ("c" (hot-expand "<c"))
+    ("l" (hot-expand "<l"))
+    ("h" (hot-expand "<h"))
+    ("a" (hot-expand "<a"))
+    ("L" (hot-expand "<L"))
+    ("i" (hot-expand "<i"))
+    ("e" (hot-expand "<e")) ; "<s" "emacs-lisp :tangle yes"))
+    ("p" (hot-expand "<s" "perl"))
+    ("u" (hot-expand "<s" "plantuml :file CHANGE.png"))
+    ("P" (hot-expand "<s" "perl" ":results output :exports both :shebang \"#!/usr/bin/env perl\"\n"))
+    ("I" (hot-expand "<I"))
+    ("H" (hot-expand "<H"))
+    ("A" (hot-expand "<A"))
+    ("<" self-insert-command "ins")
+    ("o" nil "quit")
+    ("/" hydra-org-template/body "hint")
+    )
 
-#+NAME: hydra-org-hot-expand
-#+begin_src emacs-lisp :tangle yes
 (defun hot-expand (str &optional mod header)
   "Expand org template.
 
@@ -642,198 +315,18 @@ Bootstrap bind-key
     (org-try-structure-completion)
     (when mod (insert mod) (forward-line))
     (when text (insert text))))
-#+end_src
 
-#+NAME: hydra-org-hot-expand-define-key
-#+begin_src emacs-lisp :tangle yes
-  (define-key org-mode-map "<"
-    (lambda () (interactive)
-      (if (or (region-active-p) (looking-back "^"))
-          (hydra-org-template/body)
-        (self-insert-command 1))))
+(define-key org-mode-map "<"
+  (lambda () (interactive)
+    (if (or (region-active-p) (looking-back "^"))
+        (hydra-org-template/body)
+      (self-insert-command 1))))
 
-  (eval-after-load "org"
-    '(cl-pushnew
-      '("not" "#+BEGIN_NOTES\n?\n#+END_NOTES")
-      org-structure-template-alist))
-#+end_src
+(eval-after-load "org"
+  '(cl-pushnew
+    '("not" "#+BEGIN_NOTES\n?\n#+END_NOTES")
+    org-structure-template-alist))
 
-#+NAME: hydra_font_size
-#+begin_src emacs-lisp :tangle no
-(defhydra hydra-font-size (global-map "<f9>")
-  "text-scale"
-  ("<up>" text-scale-increase "larger")
-  ("<down>" text-scale-decrease "smaller")
-  ("/" hydra-font-size/body "hint")
-  )
-#+end_src
-
-#+NAME: hydra-window-management
-#+begin_src emacs-lisp :tangle no
-(defhydra hydra-window (global-map "<f9> w"
-                                   :color red
-                                   )
-  "
- Split: _v_ert _x_:horz _=_balance
-Delete: _o_nly  _da_ce  _dw_indow  _db_uffer  _df_rame
-  Move: _s_wap
-Frames: _f_rame new  _df_ delete
-  Misc: _m_ark _a_ce  _u_ndo  _r_edo"
-  ("h" windmove-left)
-  ("j" windmove-down)
-  ("k" windmove-up)
-  ("l" windmove-right)
-  ("H" hydra-move-splitter-left)
-  ("J" hydra-move-splitter-down)
-  ("K" hydra-move-splitter-up)
-  ("L" hydra-move-splitter-right)
-  ("|" (lambda ()
-         (interactive)
-         (split-window-right)
-         (windmove-right)))
-  ("_" (lambda ()
-         (interactive)
-         (split-window-below)
-         (windmove-down)))
-  ("v" split-window-right)
-  ("x" split-window-below)
-  ("=" balance-windows)
-                                        ;("t" transpose-frame "'")
-  ("u" winner-undo)
-  ("r" winner-redo) ;;Fixme, not working?
-  ("o" delete-other-windows :exit t)
-  ("a" ace-window :exit t)
-  ("f" new-frame :exit t)
-  ("s" ace-swap-window)
-  ("da" ace-delete-window)
-  ("dw" delete-window)
-  ("db" kill-this-buffer)
-  ("df" delete-frame :exit t)
-  ("q" nil)
-                                        ;("i" ace-maximize-window "ace-one" :color blue)
-                                        ;("b" ido-switch-buffer "buf")
-  ("m" headlong-bookmark-jump)
-  ("/" hydra-window/body "hint")
-  )
-
-;;(key-chord-define-global "yy" 'hydra-window/body)
-#+end_src
-
-#+NAME: hydra-org
-#+begin_src emacs-lisp :tangle no
-(defhydra hydra-org (:color red :hint nil)
-  "
-Navigation^
----------------------------------------------------------
-_j_ next heading
-_k_ prev heading
-_h_ next heading (same level)
-_l_ prev heading (same level)
-_u_p higher heading
-_g_o to
-"
-  ("j" outline-next-visible-heading)
-  ("k" outline-previous-visible-heading)
-  ("h" org-forward-heading-same-level)
-  ("l" org-backward-heading-same-level)
-  ("u" outline-up-heading)
-  ("g" org-goto :exit t))
-#+end_src
-
-Reference : http://oremacs.com/2015/03/07/hydra-org-templates/
-
-#+NAME: File menu
-#+begin_src emacs-lisp :tangle no
-(defhydra hydra-file (global-map "<f9> f")
-  "File"
-  ("f" isearch-forward)          ; Find
-  ("n" xah-new-empty-buffer)     ; New
-  ("N" make-frame-command)       ; New Window
-  ("o" ido-find-file)            ; Open
-  ("s" save-buffer)              ; Save
-  ("S" write-file)               ; Save As
-  ("w" kill-this-buffer)         ; Close
-  ("F" xah-copy-file-path)       ; copy file path
-  ("d" xah-delete-current-file)
-  ("D" xah-delete-current-file-make-backup)
-  )
-#+end_src
-
-#+NAME: Edit menu
-#+begin_src emacs-lisp :tangle no
-(defhydra hydra-file (global-map "<f9> e")
-  "Edit"
-  ("a" mark-whole-buffer) ; Select All
-  ("x" xah-cut-line-or-region)   ; cut
-  ("c" xah-copy-line-or-region)  ; copy
-  ("v" yank)                     ; Paste
-  ("y" redo)                     ; Redo
-  ("z" undo)                     ; Undo
-  )
-#+end_src
-
-#+NAME: hydra-twittering
-#+begin_src emacs-lisp :tangle no
-(defhydra hydra-twittering (:color blue :hint nil)
-  "
-                                                                    ╭────────────┐
-     Tweets                User                        Timeline     │ Twittering │
-  ╭─────────────────────────────────────────────────────────────────┴────────────╯
-    _k_  [_t_] post tweet      _p_  [_f_] follow                  ^_g_^      [_u_] update
-    ^↑^  [_X_] delete tweet    ^↑^  [_F_] unfollow              ^_S-SPC_^    [_._] new
-    ^ ^  [_r_] retweet         ^ ^  [_d_] direct message          ^^↑^^      [^@^] current user
-    ^↓^  [_R_] retweet & edit  ^↓^  [_i_] profile (browser)   _h_ ←   → _l_  [_a_] toggle
-    _j_  [_b_] favorite        _n_   ^ ^                          ^^↓^^
-    ^ ^  [_B_] unfavorite      ^ ^   ^ ^                         ^_SPC_^
-    ^ ^  [_RET_] reply         ^ ^   ^ ^                          ^_G_^
-    ^ ^  [_T_] show Thread
-    ^ ^  [_y_] yank url          Items                     Do
-    ^ ^  [_Y_] yank tweet     ╭───────────────────────────────────────────────────────
-    ^ ^  [_e_] edit mode        _<backtab>_ ← _o_pen → _<tab>_    [_q_] exit
-    ^ ^   ^ ^                   ^         ^   ^ ^      ^     ^    [_/_] search
-  --------------------------------------------------------------------------------
-       "
-  ("\\" hydra-master/body "back")
-  ("<ESC>" nil "quit")
-  ("q"          twittering-kill-buffer)
-  ("e"          twittering-edit-mode)
-  ("j"          twittering-goto-next-status :color red)
-  ("k"          twittering-goto-previous-status :color red)
-  ("h"          twittering-switch-to-next-timeline :color red)
-  ("l"          twittering-switch-to-previous-timeline :color red)
-  ("g"          beginning-of-buffer)
-  ("G"          end-of-buffer)
-  ("t"          twittering-update-status-interactive)
-  ("X"          twittering-delete-status)
-  ("RET"        twittering-reply-to-user)
-  ("r"          twittering-native-retweet)
-  ("R"          twittering-organic-retweet)
-  ("d"          twittering-direct-message)
-  ("u"          twittering-current-timeline)
-  ("b"          twittering-favorite)
-  ("B"          twittering-unfavorite)
-  ("f"          twittering-follow)
-  ("F"          twittering-unfollow)
-  ("i"          twittering-view-user-page)
-  ("/"          twittering-search)
-  ("."          twittering-visit-timeline)
-  ("@"          twittering-other-user-timeline)
-  ("T"          twittering-toggle-or-retrieve-replied-statuses)
-  ("o"          twittering-click)
-  ("<tab>"        twittering-goto-next-thing :color red)
-  ("<backtab>"  twittering-goto-previous-thing :color red)
-  ("n"          twittering-goto-next-status-of-user :color red)
-  ("p"          twittering-goto-previous-status-of-user :color red)
-  ("SPC"        twittering-scroll-up :color red)
-  ("S-SPC"      twittering-scroll-down :color red)
-  ("y"          twittering-push-uri-onto-kill-ring)
-  ("Y"          twittering-push-tweet-onto-kill-ring)
-  ("a"          twittering-toggle-activate-buffer)
-  )
-#+end_src
-
-#+NAME: hydra-org2blog
-#+begin_src emacs-lisp :tangle yes
 (defhydra hydra-org2blog (global-map "<menu> o") 
   "
  ^Post^        q^Page^       ^C&Ts^
@@ -856,86 +349,7 @@ Reference : http://oremacs.com/2015/03/07/hydra-org-templates/
   ("t" org2blog/wp-tags-list)
   ("SPC" nil)
   )
-#+end_src
 
-#+begin_quote
-In the spirit of upping my navigation game, here we examine navigation by search like methods. You probably know about C-s with will search forward for a word, and C-r which will search backwards. This will get you to the start of a word pretty easily. It won't get you into a word though, you have to navigate to that, and it isn't too handy to get to a line, or window, or headline in an org-file. Each of these is an emacs command, which as with navigation I don't always remember. Today, we build a hydra to make this easy too. 
-
-We will use features from avy , and helm , and some standard emacs features. avy is pretty neat. It provides an interface to jump to characters, words and subwords by pressing keys. To jump to a character that is visible on the screen, you invoke avy-goto-char and press the character you want to jump to. avy will overlay a sequence of keys you then type to jump to that character. It might be more convenient to jump to a pair of characters, which you do by invoking avy-goto-char-2. Similarly, there are commands to jump to the beginning of a word, and a subword, both with variations that allow you to specify the beginning letter of the word, or to get overlays on every word. 
-
-I spend most of my days in org-files, so I frequently want to jump to an org headline in the current buffer, or some headline in an org-file in my agenda. Helm provides a nice set of functions for this in helm-org-headlines and helm-org-agenda-files-headings. We can also use helm-multi-swoop-org to use the swoop search function in all open org-buffers with helm selection. Within a buffer, you might also use the search forward and backward capabilities, or the more advanced helm-occur or swiper-helm features. Finally, I may want my cursor to go to another recent file, or open buffer. 
-
-The hydra we will develop here puts all of these commands a few keystrokes away, with a hint system to remind you what is possible. In addition to these "goto" commands, I add a character to switch to the navigation hydra we developed in the last post so I can switch to navigation if I change my mind. I also put two commands to store the current position before the goto command, and to return to that stored position conveniently. I bind this hydra to super-g, because the super key isn't used much on my Mac, and g reminds of "goto". So, here is my hydra code: 
-#+end_quote
-
-[[http://jkitchin.github.io/blog/2015/09/28/A-cursor-goto-hydra-for-emacs][The Kitchin Research Group]]
-
-#+NAME: goto
-#+begin_src emacs-lisp :tangle no
-(defhydra goto (:color blue :hint nil)
-  "
-Goto:
-^Char^ ^Word^ ^org^ ^search^
-^^^^^^^^---------------------------------------------------------------------------
-_c_: 2 chars _w_: word by char _o_: ivy-occur
-_C_: char _W_: some word _p_: swiper
-_L_: char in line _s_: subword by char _q_: swoop org buffers _f_: search forward
-^ ^ _S_: some subword ^ ^ _b_: search backward
------------------------------------------------------------------------------------
-_l_: avy-goto-line
-_i_: ace-window
-
-
-_n_: Navigate _._: mark position _/_: jump to mark
-"
-  ("c" avy-goto-char-2)
-  ("C" avy-goto-char)
-  ("L" avy-goto-char-in-line)
-  ("w" avy-goto-word-1)
-  ;; jump to beginning of some word
-  ("W" avy-goto-word-0)
-  ;; jump to subword starting with a char
-  ("s" avy-goto-subword-1)
-  ;; jump to some subword
-  ("S" avy-goto-subword-0)
-
-  ("l" avy-goto-line)
-  ("i" ace-window)
-
-  ;; ("h" helm-org-headlines)
-  ;; ("a" helm-org-agenda-files-headings)
-  ("q" helm-multi-swoop-org)
-
-  ("o" ivy-occur)
-  ("p" swiper)
-
-  ("f" isearch-forward)
-  ("b" isearch-backward)
-
-  ("." org-mark-ring-push :color red)
-  ("/" org-mark-ring-goto :color blue)
-  ;; ("B" helm-buffers-list)
-  ;; ("m" helm-mini)
-  ;; ("R" helm-recentf)
-  ("n" hydra-navigate/body))
-
-(global-set-key (kbd "H-g") 'goto/body)
-#+end_src
-
-* org                                                            :keybinding:
-
-  This is my heavily simplified org-mode configuration. My older one, which I used for a few years, collected a significant layer of cruft from:
-
-  - stuff I tried
-  - workflows I abandoned
-  - items not fully baked
-
-  This configuration features productivity and GTD/GSD. The simplicity provides greater focus on the workflow and results while reducing the friction of use. It relies little on external third party apps and features unless a clear benefit exists - voice input of reminders and tasks on iOS, for example.
-  
-
-** initialization                                                :keybinding:
-
-#+BEGIN_SRC emacs-lisp :tangle yes
 (use-package org
   :ensure t
   :demand
@@ -980,76 +394,60 @@ _n_: Navigate _._: mark position _/_: jump to mark
     (set-face-attribute face nil :inherit 'fixed-pitch)    
     )
   )
-#+END_SRC
 
-** org-mouse
-
-#+NAME:
-#+begin_src emacs-lisp :tangle yes
 (use-package org-mouse)
-#+end_src
 
-** GSD
+(setq org-agenda-files '("~/gtd/inbox.org"
+                         "~/gtd/gtd.org"
+                         "~/gtd/tickler.org"))
 
-[[https://emacs.cafe/emacs/orgmode/gtd/2017/06/30/orgmode-gtd.html][Orgmode for GTD on Emacs cafe]]
-  
-#+begin_src emacs-lisp :tangle yes
-  (setq org-agenda-files '("~/gtd/inbox.org"
-                           "~/gtd/gtd.org"
-                           "~/gtd/tickler.org"))
+(setq org-capture-templates '(
+			      ("t" "Todo [inbox]" entry
+                               (file+headline "~/gtd/inbox.org" "Tasks")
+                               "* TODO %i%?")
+                              ("T" "Tickler" entry
+                               (file+headline "~/gtd/tickler.org" "Tickler")
+                               "* %i%? \n %U")
+			      ("n" "Note [inbox]" entry
+			       (file+headline "~/gtd/inbox.org" "Notes")
+			       "* %i%? \n %U")
+			      )
+      )
 
-  (setq org-capture-templates '(
-				("t" "Todo [inbox]" entry
-                                 (file+headline "~/gtd/inbox.org" "Tasks")
-                                 "* TODO %i%?")
-                                ("T" "Tickler" entry
-                                 (file+headline "~/gtd/tickler.org" "Tickler")
-                                 "* %i%? \n %U")
-				("n" "Note [inbox]" entry
-				 (file+headline "~/gtd/inbox.org" "Notes")
-				 "* %i%? \n %U")
-				)
-	)
-
-  (setq org-refile-targets '(("~/gtd/gtd.org" :maxlevel . 3)
-                             ("~/gtd/someday.org" :level . 1)
-                             ("~/gtd/tickler.org" :maxlevel . 2)))
+(setq org-refile-targets '(("~/gtd/gtd.org" :maxlevel . 3)
+                           ("~/gtd/someday.org" :level . 1)
+                           ("~/gtd/tickler.org" :maxlevel . 2)))
 
 
-  (setq org-todo-keywords '((sequence
-                             "TODO(t)"
-                             "WAITING(w)"
-                             "|"
-                             "DONE(d)"
-                             "CANCELLED(c)"
-                             )))
+(setq org-todo-keywords '((sequence
+                           "TODO(t)"
+                           "WAITING(w)"
+                           "|"
+                           "DONE(d)"
+                           "CANCELLED(c)"
+                           )))
 
-  (setq org-agenda-custom-commands 
-        '(("o" "At the office" tags-todo "@office"
-           ((org-agenda-overriding-header "Office")
-            (org-agenda-skip-function #'my-org-agenda-skip-all-siblings-but-first)))))
+(setq org-agenda-custom-commands 
+      '(("o" "At the office" tags-todo "@office"
+         ((org-agenda-overriding-header "Office")
+          (org-agenda-skip-function #'my-org-agenda-skip-all-siblings-but-first)))))
 
-  (defun my-org-agenda-skip-all-siblings-but-first ()
-    "Skip all but the first non-done entry."
-    (let (should-skip-entry)
-      (unless (org-current-is-todo)
-        (setq should-skip-entry t))
-      (save-excursion
-        (while (and (not should-skip-entry) (org-goto-sibling t))
-          (when (org-current-is-todo)
-            (setq should-skip-entry t))))
-      (when should-skip-entry
-        (or (outline-next-heading)
-            (goto-char (point-max))))))
-		  
-  (defun org-current-is-todo ()
-    (string= "TODO" (org-get-todo-state)))
+(defun my-org-agenda-skip-all-siblings-but-first ()
+  "Skip all but the first non-done entry."
+  (let (should-skip-entry)
+    (unless (org-current-is-todo)
+      (setq should-skip-entry t))
+    (save-excursion
+      (while (and (not should-skip-entry) (org-goto-sibling t))
+        (when (org-current-is-todo)
+          (setq should-skip-entry t))))
+    (when should-skip-entry
+      (or (outline-next-heading)
+          (goto-char (point-max))))))
 
-#+end_src
+(defun org-current-is-todo ()
+  (string= "TODO" (org-get-todo-state)))
 
-** structure templates & other initialization
-
-#+BEGIN_SRC emacs-lisp :tangle yes
 (setq
  org-structure-template-alist     '(
                                     ("A" "#+ascii: ")
@@ -1069,16 +467,7 @@ _n_: Navigate _._: mark position _/_: jump to mark
                                     ("v" "#+BEGIN_VERSE\n?\n#+END_VERSE" "<verse>\n?\n</verse>")
                                     )
      )
-#+END_SRC
 
-** indent                                                        :keybinding:
-
-   http://www.wisdomandwonder.com/link/9858/you-probably-want-org-return-indent-bound-to-return
-
-   [[http://kitchingroup.cheme.cmu.edu/blog/2017/04/09/A-better-return-in-org-mode/][A better return in org-mode]]
-
-#+NAME:
-#+begin_src emacs-lisp :tangle yes
 ;; (define-key org-mode-map (kbd "RET") 'org-return-indent)
 ;; (define-key org-mode-map (kbd "<return>") 'org-return-indent)
 
@@ -1156,32 +545,13 @@ Use a prefix arg to get regular RET. "
   'scimax/org-return)
 (define-key org-mode-map (kbd "<return>")
   'scimax/org-return)
-#+end_src
 
-** org-cliplinks                                                 :keybinding:
-
-[[https://github.com/rexim/org-cliplink][rexim/org-cliplink · GitHub]]
-
-#+NAME: org-cliplink
-#+begin_src emacs-lisp :tangle yes
 (use-package org-cliplink
   :ensure t
   :bind
   ("C-c l" . org-cliplink)
   )
-#+end_src
-   
-** drag and drop                                                 :keybinding:
 
-   [[http://kitchingroup.cheme.cmu.edu/blog/2015/07/10/Drag-images-and-files-onto-org-mode-and-insert-a-link-to-them/][The Kitchin Research Group]]
-   
-#+begin_quote
- I want to drag and drop an image onto an org mode file and get a link to that file. This would be used for finding images in Finder, and then dragging them to the Emacs buffer. There is org-download.el which looks like it should do something like this too, but it did not work out of the box for me, and I want to add a few wrinkles to it. For a simple drag-n-drop, I just want the link to appear. With ctrl-drag-n-drop I want to add an attr_org line to set the image size, add a caption line, insert the image at the beginning of the line where the mouse cursor is, put the cursor on the caption line and then refresh the inline images in org-mode so the image is immediately visible.
-
-While we are at let us also make it possible to drag file links onto org-files, instead of having the files open. Again, for a simple drag-n-drop, I want a link inserted. For ctrl-drag-n-drop we open the file, and for Meta (alt) drag-n-drop, we insert an attachfile link. You can also define s-drag-n-drop (Super/command) and C-s and M-s drag-n-drop if you can think of things to do with that. 
-#+end_quote
-
-#+begin_src emacs-lisp :tangle yes
 (defun my-dnd-func (event)
   (interactive "e")
   (goto-char (nth 1 (event-start event)))
@@ -1222,16 +592,7 @@ While we are at let us also make it possible to drag file links onto org-files, 
 (define-key org-mode-map (kbd "<drag-n-drop>") 'my-dnd-func)
 (define-key org-mode-map (kbd "<C-drag-n-drop>") 'my-dnd-func)
 (define-key org-mode-map (kbd "<M-drag-n-drop>") 'my-dnd-func)
-#+end_src
 
-** org-wunderlist                                                   :private:
-
-   Wunderlist, while it exists, provides a bridge between iOS voice input for reminders and org-mode. A ifttt.com recipe emails newly created iOS/macOS reminders into Wunderlist. This package pulls the entries into an org-file. Each of the entries brought in gets refiled. I manually delete the reminders and Wunderlist entries.
-
-   - [ ] TODO automate task & reminder import into org-mode and delete the originating source entry (Reminders, Wunderlist, IBM Notes/Verse, etc.)
-   
-#+NAME: org-wunderlist
-#+begin_src emacs-lisp :tangle yes
 (use-package org-wunderlist
   :ensure t
   :config
@@ -1239,44 +600,19 @@ While we are at let us also make it possible to drag file links onto org-files, 
       org-wunderlist-file  "~/gtd/wunderlist.org"
       org-wunderlist-dir "~/gtd/org-wunderlist/")
   )
-#+end_src
-
-** Tasks
-
-   - [ ] [[https://github.com/calvinwyoung/org-autolist][GitHub - calvinwyoung/org-autolist: Making it even easier to edit lists in or...]]
-   - [ ] [[http://kitchingroup.cheme.cmu.edu/blog/2017/04/09/A-better-return-in-org-mode/][A better return in org-mode]]
-   - [ ] [[http://www.bobnewell.net/publish/35years/webclipper.html][A Web Clipper of Sorts for Org-Mode]]
 
 
 
-#+BEGIN_SRC emacs-lisp :tangle yes
 
-#+END_SRC
 
-#+BEGIN_SRC emacs-lisp :tangle yes
 
-#+END_SRC
 
-#+BEGIN_SRC emacs-lisp :tangle yes
 
-#+END_SRC
 
-#+BEGIN_SRC emacs-lisp :tangle yes
-
-#+END_SRC
-** TODO org2blog
-
-#+NAME: xml-rpc from githhub
-#+begin_src emacs-lisp :tangle yes
 (use-package xml-rpc
   :load-path "elisp/"
   )
-#+end_src
 
-   [[http://lavnir.be/wp/?p%3D6][org2blog]] authentication tips
-
-#+NAME: org2blog
-#+begin_src emacs-lisp :tangle yes
 (use-package org2blog
   :after xml-rpc
   :load-path "../OneDrive/Documents/GitHub/org2blog"
@@ -1315,19 +651,11 @@ While we are at let us also make it possible to drag file links onto org-files, 
 	    (format-time-string "%d-%m-%Y" (current-time)))
     )
   )
-#+end_src
 
-#+NAME: htmlize
-#+begin_src emacs-lisp :tangle yes
-  (use-package htmlize
-    :ensure t
-    )
-#+end_src
+(use-package htmlize
+  :ensure t
+  )
 
-* desktop
-
-#+NAME: desktop
-#+begin_src emacs-lisp :tangle yes
 (use-package desktop
   :config
   (setq
@@ -1339,19 +667,9 @@ While we are at let us also make it possible to drag file links onto org-files, 
   ;; (kill-buffer "*scratch*")
   (desktop-save-mode 1)
   )
-#+end_src
 
-#+NAME: winner-mode
-#+begin_src emacs-lisp :tangle yes
 (winner-mode 1)
-#+end_src
 
-* window management
-
-** ace-window
-
-#+NAME: ace-window
-#+begin_src emacs-lisp :tangle yes
 (use-package ace-window
   :ensure t
   :defer 1
@@ -1399,12 +717,7 @@ While we are at let us also make it possible to drag file links onto org-files, 
     (add-to-list 'aw-dispatch-alist '(?\; hydra-window-frame/body) t))
   (ace-window-display-mode t)
   )
-#+end_src
 
-** wind move
-
-#+NAME: windmove
-#+begin_src emacs-lisp :tangle yes
 (use-package windmove
   :ensure t
   :bind (
@@ -1422,12 +735,7 @@ While we are at let us also make it possible to drag file links onto org-files, 
   :config
   (windmove-default-keybindings 'super)
   )
-#+end_src
 
-** frame move
-
-#+NAME: framemove
-#+begin_src emacs-lisp :tangle yes
 (use-package framemove
   :ensure t
   ;; :bind (
@@ -1442,86 +750,13 @@ While we are at let us also make it possible to drag file links onto org-files, 
    framemove-hook-into-windmove t
    )
 )
-#+end_src
 
-** more window stuff
-
-#+NAME:
-#+begin_src emacs-lisp :tangle yes
 (use-package switch-window
   :bind (
 	 ("<f2> o" . switch-window)
 	 )
   )
-#+end_src
 
-* dired
-
-#+NAME:
-#+begin_src emacs-lisp :tangle no
-(defhydra hydra-dired (:hint nil :color pink)
-  "
-_+_ mkdir          _v_iew           _m_ark             _(_ details        _i_nsert-subdir    wdired
-_C_opy             _O_ view other   _U_nmark all       _)_ omit-mode      _$_ hide-subdir    C-x C-q : edit
-_D_elete           _o_pen other     _u_nmark           _l_ redisplay      _w_ kill-subdir    C-c C-c : commit
-_R_ename           _M_ chmod        _t_oggle           _g_ revert buf     _e_ ediff          C-c ESC : abort
-_Y_ rel symlink    _G_ chgrp        _E_xtension mark   _s_ort             _=_ pdiff
-_S_ymlink          ^ ^              _F_ind marked      _._ toggle hydra   \\ flyspell
-_r_sync            ^ ^              ^ ^                ^ ^                _?_ summary
-_z_ compress-file  _A_ find regexp
-_Z_ compress       _Q_ repl regexp
-
-T - tag prefix
-"
-  ("\\" dired-do-ispell)
-  ("(" dired-hide-details-mode)
-  (")" dired-omit-mode)
-  ("+" dired-create-directory)
-  ("=" diredp-ediff)         ;; smart diff
-  ("?" dired-summary)
-  ("$" diredp-hide-subdir-nomove)
-  ("A" dired-do-find-regexp)
-  ("C" dired-do-copy)        ;; Copy all marked files
-  ("D" dired-do-delete)
-  ("E" dired-mark-extension)
-  ("e" dired-ediff-files)
-  ("F" dired-do-find-marked-files)
-  ("G" dired-do-chgrp)
-  ("g" revert-buffer)        ;; read all directories again (refresh)
-  ("i" dired-maybe-insert-subdir)
-  ("l" dired-do-redisplay)   ;; relist the marked or singel directory
-  ("M" dired-do-chmod)
-  ("m" dired-mark)
-  ("O" dired-display-file)
-  ("o" dired-find-file-other-window)
-  ("Q" dired-do-find-regexp-and-replace)
-  ("R" dired-do-rename)
-  ("r" dired-do-rsynch)
-  ("S" dired-do-symlink)
-  ("s" dired-sort-toggle-or-edit)
-  ("t" dired-toggle-marks)
-  ("U" dired-unmark-all-marks)
-  ("u" dired-unmark)
-  ("v" dired-view-file)      ;; q to exit, s to search, = gets line #
-  ("w" dired-kill-subdir)
-  ("Y" dired-do-relsymlink)
-  ("z" diredp-compress-this-file)
-  ("Z" dired-do-compress)
-  ("q" nil)
-  ("." nil :color blue))
-
-(define-key dired-mode-map "." 'hydra-dired/body)
-#+end_src
-
-* interface
-** adaptive visual line mode
-
-  According to http://redhotchilipython.com/en_posts/2013-05-26-emacs-visual-line.html (disappeared as of 2015-02-17): "For �soft wrapping� in emacs, currently best option seems to be Visual Line Mode, but it lacks nice indentation facilities. So it needs also an Adaptive Wrap mode."
-
-  I think this needs to move somewhere else in my init, I'm just not sure where
-
-#+NAME: adaptive-wrap
-#+begin_src emacs-lisp :tangle yes
 (use-package adaptive-wrap
   :ensure t
   :config
@@ -1531,12 +766,7 @@ T - tag prefix
   (add-hook 'visual-line-mode-hook 'adaptive-wrap-prefix-mode)
   (diminish 'visual-line-mode "🎁")
   )
-#+end_src
 
-** aggressive indent
-
-#+NAME:aggressive-indent
-#+BEGIN_SRC emacs-lisp :tangle yes
 (use-package aggressive-indent
   :diminish "⏭"
   :ensure t
@@ -1545,14 +775,7 @@ T - tag prefix
   (global-aggressive-indent-mode 1)
   (add-to-list 'aggressive-indent-excluded-modes 'html-mode)
   )
-#+END_SRC
 
-** theme
-
-  Set up the solarized theme, making sure to not automatically adjust font sizes. Might mess up Gnu/Linux.
-
-#+NAME: solarized-theme
-#+begin_src emacs-lisp :tangle yes
 (use-package solarized-theme
   :ensure t
   :config
@@ -1575,27 +798,7 @@ T - tag prefix
   (load-theme 'solarized-light)
   (load-theme 'smart-mode-line-light)
   )
-#+end_src
 
-Set up theme-changer to give me a light theme in the day and a dark one at night based on my hard-coded location.  Check it out here: [[https://github.com/hadronzoo/theme-changer][theme-changer on GitHub]]. Note smart-mode-line (sml) themes in the second change-theme call. You can stack these since sml themes are theme-engine compatible.
-
-#+NAME: theme-changer
-#+begin_src emacs-lisp :tangle no
-(use-package theme-changer
-  :disabled t
-;;   :ensure   t
-  :config
-  ;; (change-theme 'solarized-light 'solarized-dark)
-  ;; (change-theme 'smart-mode-line-light 'smart-mode-line-dark)
-  )
-#+end_src
-
-** smart mode line
-
-  Check out [[https://github.com/Bruce-Connor/smart-mode-line/][smart-mode-line on GitHub]].
-
-#+NAME: smart-mode-line
-#+BEGIN_SRC emacs-lisp :tangle yes
 (use-package smart-mode-line
   :ensure t
   :after spaceline-config
@@ -1610,34 +813,14 @@ Set up theme-changer to give me a light theme in the day and a dark one at night
   (add-to-list 'sml/replacer-regexp-list '("/etc/"           ":&:") )
   (add-to-list 'sml/replacer-regexp-list '("[pP]rojects/"    "📽:") )
   )
-#+END_SRC
 
-#+NAME: ergoemacs-status
-#+begin_src emacs-lisp :tangle no
-(use-package ergoemacs-status
-  :ensure t
-  :after solarized-theme
-  :config
-  (ergoemacs-status-mode)
-  )
-#+end_src
-
-** mode-icons
-
-#+NAME:
-#+begin_src emacs-lisp :tangle yes
 (use-package mode-icons
   :ensure t
   :after spaceline-config
   :config
   (mode-icons-mode)
   )
-#+end_src
 
-** spaceline & powerline
-
-#+NAME: spaceline
-#+begin_src emacs-lisp :tangle yes
 (use-package spaceline-config           ; A beautiful mode line
   :ensure spaceline
   :after solarized-theme
@@ -1645,10 +828,7 @@ Set up theme-changer to give me a light theme in the day and a dark one at night
   ;; (spaceline-helm-mode)                 ; Enable a special Helm mode line
   (spaceline-emacs-theme)
   )
-#+end_src
 
-#+NAME: powerline
-#+begin_src emacs-lisp :tangle yes
 (use-package powerline                  ; The work-horse of Spaceline
   :ensure t
   :after spaceline-config
@@ -1657,45 +837,16 @@ Set up theme-changer to give me a light theme in the day and a dark one at night
            powerline-default-separator 'utf-8
            )
   )
-#+end_src
 
-** scroll
-
-http://pragmaticemacs.com/emacs/scrolling-and-moving-by-line/
-
-#+begin_quote
- There are (of course) lots of ways to scroll the window and move the cursor in emacs. To move the cursor up or down by a line you can use the arrow keys, or C-n and C-p.
-
-To scroll the window, you can use C-v and M-v to scroll down or up respectively by nearly one full screen. This is equivalent to page up/down.
-
-Normally when you scroll the window, the cursor stays with its current line until it hits the edge of the window and then it moves to the next line. In other words the cursor follows the text as the text scrolls. I prefer the cursor to stay at the same position in the window when I scroll it, so the text moves under the cursor. I also like to add the following simple commands which scroll the window up or down by one line. Putting these two tweaks together, the window moves by one line while the cursor stays still. 
-#+end_quote
-  
-#+NAME:
-#+begin_src emacs-lisp :tangle yes
 (setq scroll-preserve-screen-position 1) ; keep cursor at same position when scrolling
 (global-set-key (kbd "M-n") (kbd "C-u 1 C-v")) ; scroll window up by 1 line
 (global-set-key (kbd "M-p") (kbd "C-u 1 M-v")) ; scroll window down by 1 line
-#+end_src
 
-#+begin_quote
- Note how these commands work by passing a prefix argument to the normal scroll commands – this is described in the help for those functions which you can see by using e.g. C-h k C-v.
-
-I used the keybindings M-n and M=p by analogy with C-n and C-p. 
-#+end_quote
-
-** parenthesis
-
-#+NAME: highlight parenthetical expression
-#+begin_src emacs-lisp :tangle yes
 (setq
  show-paren-style 'expression           ; highlight entire bracket expression
  )
 (show-paren-mode 1)
-#+end_src
 
-#+NAME: electric-pair-mode
-#+begin_src emacs-lisp :tangle yes
 ;; make electric-pair-mode work on more brackets
 (setq
  electric-pair-pairs '(
@@ -1704,22 +855,17 @@ I used the keybindings M-n and M=p by analogy with C-n and C-p.
                        )
  )
 (electric-pair-mode 1)
-#+end_src
 
-** rainbow-delimiters
-
-#+NAME:
-#+begin_src emacs-lisp :tangle yes
 (use-package rainbow-delimiters
   :ensure t
   :config
   (add-hook 'prog-mode-hook 'rainbow-delimiters-mode)
   )
-#+end_src
 
-** rainbow-mode
+;; rainbow-mode
   
-#+BEGIN_SRC emacs-lisp :exports code :comments both :padline yes :tangle yes
+
+;; [[file:~/.emacs.d/my_init.org::*rainbow-mode][rainbow-mode:1]]
 (use-package rainbow-mode
   :ensure t
   :defer t
@@ -1732,36 +878,18 @@ I used the keybindings M-n and M=p by analogy with C-n and C-p.
   ;;        '(diminish 'rainbow-mode "rb")))
   ;; )
   )
-#+END_SRC
+;; rainbow-mode:1 ends here
 
-
-** dimish bufface from mode line
-
-#+NAME:
-#+begin_src emacs-lisp :tangle yes
 ;; Remove BufFace from mode line
 (eval-after-load "face-remap"
   '(diminish 'buffer-face-mode))
-#+end_src
 
-
-** beacon
-
-  Highlight cursor position in buffer.
-  
-#+NAME:
-#+begin_src emacs-lisp :tangle yes
 (use-package beacon                     ; Highlight cursor position in buffer
   :ensure t
   :init (beacon-mode 1)
   :diminish "⚐"
   )
-#+end_src
 
-* which-key
-   
-#+NAME: which-key
-#+begin_src emacs-lisp :tangle yes
 (use-package which-key
   :diminish "¿"
   :ensure t
@@ -1793,14 +921,7 @@ I used the keybindings M-n and M=p by analogy with C-n and C-p.
    )
   
   )
-#+end_src
-* redo mode
 
-    undo-tree is an improvement over the built-in capabilities.
-
-    NOTE: redo+ is enabled for macOS in the keyboard section above
-    
-#+BEGIN_SRC emacs-lisp :tangle yes
 (use-package undo-tree
   :ensure t
   :diminish "⎌"
@@ -1814,39 +935,16 @@ I used the keybindings M-n and M=p by analogy with C-n and C-p.
   ;; (global-unset-key (kbd "C-z"))
   ;; (global-unset-key (kbd "C-S-z"))
   )
-#+END_SRC
 
-    + I remap C-z to undo and C-Z to redo to keep from accidentally minimizing the Emacs frame I'm working in. You do need to unset and reset in this case.
-
-#+NAME: Key Bindings
-#+begin_src emacs-lisp :tangle no
-(global-set-key (kbd "<f5>")   'undo)
-(global-set-key (kbd "<c-f5>") 'redo)
-(global-set-key (kbd "C-z")    'undo)
-(global-set-key (kbd "C-S-z")  'redo)
-#+end_src
-
-* revert & trash
-
-#+NAME: revert settings
-#+begin_src emacs-lisp :tangle yes
 (setq
  auto-revert-verbose nil               ; don't notify when dired is refreshed
  delete-by-moving-to-trash t
  global-auto-revert-non-file-buffers t ; auto refresh dired
  trash-directory "~/.Trash/"
  )
-#+end_src
 
-#+NAME: revert buffer key bindings
-#+begin_src emacs-lisp :tangle yes
 (global-set-key (kbd "H-r") 'revert-buffer)
-#+end_src
 
-* anzu                                                               :search:
-
-#+NAME: anzu
-#+begin_src emacs-lisp :tangle yes
 (use-package anzu
   :ensure t
   :defer t
@@ -1872,14 +970,7 @@ I used the keybindings M-n and M=p by analogy with C-n and C-p.
   :init   (global-anzu-mode)
   :diminish "￼"
   )
-#+end_src
 
-* counsel, ivy, swiper, avy 
-
-  - [ ] [[https://cestlaz.github.io/posts/using-emacs-6-swiper/#.WV0W98aZPEZ][Using Emacs - 6 - Searching a Swiper | C'est la Z]]
-
-#+NAME: counsel
-#+begin_src emacs-lisp :tangle yes
 (use-package counsel
   :ensure t
   :bind
@@ -1906,10 +997,7 @@ I used the keybindings M-n and M=p by analogy with C-n and C-p.
    ("M-x"     . counsel-M-x                )
    )
   )
-#+end_src
 
-#+NAME: ivy
-#+begin_src emacs-lisp :tangle yes
 (use-package ivy
   :diminish "⚘"
   :config
@@ -1927,80 +1015,35 @@ I used the keybindings M-n and M=p by analogy with C-n and C-p.
    )
   (define-key read-expression-map (kbd "C-r") 'counsel-expression-history)
   )
-#+end_src
 
-#+NAME: ivy-hydra
-#+begin_src emacs-lisp :tangle yes
 (use-package ivy-hydra
   :ensure t)
-#+end_src
 
-#+NAME: swiper
-#+begin_src emacs-lisp :tangle yes
 (use-package swiper
   :ensure try)
-#+end_src
 
-#+NAME: avy
-#+begin_src emacs-lisp :tangle yes
 (use-package avy
   :ensure t
   :config
   (avy-setup-default)
   )
-#+end_src
 
-* Writing: spelling, grammar, templates, autoinsert and more
-  
-** abbrev                                                           :writing:
+(use-package abbrev
+  :diminish "𝄅⥄"
+  :config
+  (setq-default abbrev-mode t)
+  (setq
+   save-abbrevs 'silently
+   ;; abbrev-file-name (concat user-emacs-directory (car (split-string (system-name) "\\.")) ".abbrev.el")
+   )
+  (quietly-read-abbrev-file)
+  )
 
-  This is in the list of packages to configure.
-
-#+NAME: abbrev
-#+begin_src emacs-lisp :tangle yes
-  (use-package abbrev
-    :diminish "𝄅⥄"
-    :config
-    (setq-default abbrev-mode t)
-    (setq
-     save-abbrevs 'silently
-     ;; abbrev-file-name (concat user-emacs-directory (car (split-string (system-name) "\\.")) ".abbrev.el")
-     )
-    (quietly-read-abbrev-file)
-    )
-#+end_src
-** define-word                                           :writing:keybinding:
-
-#+BEGIN_QUOTE
-I just stumbled upon a new offering from abo-abo. It's define-word, a very nice package that allows you to get a definition of the word at point. You can also specify the word in the minibuffer if you want.
-
-The package works by connecting to wordnik, grabbing the resulting page, parsing out the definition, and then displaying it as a message. That's nice because it doesn't require that you have a dictionary installed to work. Abo-abo says the package is less than 50 lines so there's no memory overhead to speak of.
-
-OS X has a nice feature where you can three-finger tap on a word in most of the native apps and get a definition from the system dictionary. Unfortunately it doesn't work with Emacs so I had to manually look up definitions using spotlight. That wasn't too much trouble but define-word is so much better. I bound the commands to?Hyper+d? and?Hyper+D? using use-package
-#+END_QUOTE
-
-Link is here: http://irreal.org/blog/?p=3994
-
-#+BEGIN_SRC emacs-lisp :tangle yes
 (use-package define-word
   :ensure t
   :bind (("H-d" . define-word-at-point)
 	 ("H-D" . define-word)))
-#+END_SRC
 
-
-** artbollocks                                                      :writing:
-
-[[http://lifehacker.com/the-useless-words-and-phrases-you-should-strike-from-yo-1690952835][The Useless Words and Phrases You Should Strike from Your Writing]]
-
-[[http://pages.sachachua.com/.emacs.d/Sacha.html#unnumbered-41][Writing - Avoid weasel words]]
-
-[[http://dianetibert.com/2014/02/06/publishing-101-targeting-passive-text-and-redundant-words/][Targetting Passive Text and Redunant Words]]
-
-[[http://dianaurban.com/words-you-should-cut-from-your-writing-immediately][43 Words You Should Cut From Your Writing Immediately]]
-
-#+NAME:artbollocks-mode
-#+begin_src emacs-lisp :tangle yes
 (use-package artbollocks-mode
   :ensure t
   :config
@@ -2121,14 +1164,7 @@ Link is here: http://irreal.org/blog/?p=3994
   (add-hook 'org-mode-hook         'artbollocks-mode)
   (eval-after-load "artbollocks-mode" '(diminish 'artbollocks-mode "🎨"))
   )
-#+end_src
 
-** writegood mode                                        :writing:keybinding:
-
-[[http://bnbeckwith.com/code/writegood-mode.html][WriteGood Mode home page]]
-
-#+NAME: writegood-mode
-#+begin_src emacs-lisp :tangle yes
 (use-package writegood-mode
   :ensure t
   :bind
@@ -2142,14 +1178,7 @@ Link is here: http://irreal.org/blog/?p=3994
   (add-hook 'text-mode-hook        'writegood-mode)
   (add-hook 'org-mode-hook         'writegood-mode)
   )
-#+end_src
 
-** spelling                                              :writing:keybinding:
-
-*** flyspell
-
-#+NAME: flyspell
-#+begin_src emacs-lisp :tangle yes
 (use-package flyspell
   :diminish "🐛"
   :config
@@ -2179,14 +1208,7 @@ Link is here: http://irreal.org/blog/?p=3994
                   js2-mode-hook))
     (add-hook hook 'flyspell-prog-mode))
   )
-#+end_src
 
-  From [[https://emacs.stackexchange.com/questions/9333/how-does-one-use-flyspell-in-org-buffers-without-flyspell-triggering-on-tangled][How does one use flyspell in org buffers without flyspell triggering on tangled code blocks?]] on StackExchange, courtesy of Chen Bin:
-
-Modified by me on [2015-06-25 Thu] to include quote blocks.
-
-#+NAME: flyspell_ignore_org_code_blocks
-#+begin_src emacs-lisp :tangle yes
 ;; NO spell check for embedded snippets
 (defadvice org-mode-flyspell-verify (after org-mode-flyspell-verify-hack activate)
   (let ((rlt ad-return-value)
@@ -2205,12 +1227,7 @@ Modified by me on [2015-06-25 Thu] to include quote blocks.
       )
     (setq ad-return-value rlt))
   )
-#+end_src
 
-*** ispell
-
-#+NAME: ispell
-#+BEGIN_SRC emacs-lisp :tangle yes
 (use-package ispell
   :bind (
          ("C-c s" . endless/ispell-word-then-abbrev)
@@ -2236,12 +1253,7 @@ Modified by me on [2015-06-25 Thu] to include quote blocks.
     )
    )
   )
-#+END_SRC
 
-Endless ispell word then abbrev, from: [[http://endlessparentheses.com/ispell-and-abbrev-the-perfect-auto-correct.html][Ispell and Abbrev, the Perfect Auto-Correct]]
-
-#+NAME:endless/ispell-word-then-abbrev
-#+begin_src emacs-lisp :tangle yes
 (define-key ctl-x-map "\C-i"
   #'endless/ispell-word-then-abbrev)
 
@@ -2283,12 +1295,7 @@ Version 2016-01-20"
           (message "\"%s\" now expands to \"%s\" %sally"
                    bef aft (if p "loc" "glob")))
       (user-error "No typo at or before point"))))
-#+end_src
 
-[[http://endlessparentheses.com/ispell-and-apostrophes.html][Ispell and Apostrophes]]
-
-#+NAME: fix ispell typography issue
-#+begin_src emacs-lisp :tangle yes
 ;;; Tell ispell.el that ’ can be part of a word.
 (setq ispell-local-dictionary-alist
       `((nil "[[:alpha:]]" "[^[:alpha:]]"
@@ -2311,18 +1318,7 @@ Version 2016-01-20"
           (cdr args))))
 (advice-add #'ispell-parse-output :filter-args
             #'endless/replace-quote)
-#+end_src
 
-[[http://pragmaticemacs.com/emacs/jump-back-to-previous-typo/][Jump back to previous typo. | Pragmatic Emacs]]
-
-#+begin_quote
-Flyspell offers the function flyspell-goto-next-error which moves the point forward to the next error, and is bound to C-, (although this keybinding is taken over in org-mode). However, I only want to move back to the previous error, but flyspell offers no function for this. This is easily fixed with a very slightly modified version of the code from this answer by hatschipuh on stackexchange. 
-
-This code jumps you to the end of the most recent misspelled word.
-#+end_quote
-
-#+NAME: flyspell-goto-previous-error
-#+begin_src emacs-lisp :tangle yes
 ;; move point to previous error
 ;; based on code by hatschipuh at
 ;; http://emacs.stackexchange.com/a/14912/2017
@@ -2365,28 +1361,7 @@ This code jumps you to the end of the most recent misspelled word.
         (forward-word)))))
 
 (global-set-key (kbd "C-c ,") 'flyspell-goto-previous-error)
-#+end_src
 
-** comments                                                      :keybinding:
-
-[[http://endlessparentheses.com/implementing-comment-line.html][Implementing comment-line · Endless Parentheses]]
-
-#+begin_quote
-Why we don't have a comment/uncomment-line function is beyond me. While we fix that, might as well make it as complete as possible. 
-
-Short and sweet, isn't it? In analogy to M-;. I find C-; to be a great binding for it. This way I can quickly comment 3 lines by hitting C-3 C-;.
-
-Also, because it moves forward after commenting, you can conveniently do things like comment every other line by repeatedly doing C-; C-n.
-
-Update <2015-02-01 Sun>
-The previous version didn't quite work for negative prefix arguments, so I've updated the above snippet to fix that.
-
-Also, quite a few people requested (or proposed) a version which acts on region if active. I already use M-; for that (and I also its other modes of operation), but I can see why people would want that so I've added it below. It's similar to the one suggested by Kaushal Modi. 
-
-#+end_quote
-
-#+NAME: comment line or region
-#+begin_src emacs-lisp :tangle yes
 (defun endless/comment-line-or-region (n)
   "Comment or uncomment current line and leave point after it.
 With positive prefix, apply to N lines including current one.
@@ -2406,12 +1381,7 @@ If region is active, apply to active region instead."
     (back-to-indentation)))
 
 (global-set-key (kbd "C-;") #'endless/comment-line)
-#+end_src
 
-** skeleton                                                        :template:
-
-#+NAME:
-#+begin_src emacs-lisp :tangle yes
 ;; This turns on auto-insert-mode
 (auto-insert-mode)
 ;; This turns off the prompt that auto-insert-mode asks before
@@ -2444,14 +1414,7 @@ If region is active, apply to active region instead."
 ;; This is how to tell auto-insert what to use for .org files
 (define-auto-insert "\\.org\\'" 'my-org-defaults)
 (define-auto-insert "\\.txt\\'" 'my-org-defaults)
-#+end_src
 
-** typography
-
-[[http://endlessparentheses.com/prettify-you-apostrophes.html][Prettify your Apostrophes]]
-
-#+NAME: Apostrophes
-#+begin_src emacs-lisp :tangle yes
 (define-key org-mode-map "'" #'endless/apostrophe)
 (eval-after-load 'markdown-mode
   '(define-key markdown-mode-map "'"
@@ -2472,12 +1435,7 @@ Inside a code-block, just call `self-insert-command'."
           (insert "’")
         (insert "‘’")
         (forward-char -1)))))
-#+end_src
 
-[[http://endlessparentheses.com/prettify-your-quotation-marks.html][Prettify your Quotation Marks]]
-
-#+NAME: Quotation Marks
-#+begin_src emacs-lisp :tangle yes
 (define-key org-mode-map "\"" #'endless/round-quotes)
 (eval-after-load 'markdown-mode
   '(define-key markdown-mode-map "\""
@@ -2501,16 +1459,7 @@ Inside a code-block, just call `self-insert-command'."
         (forward-char -1))
       (insert "“”")
       (forward-char -1))))
-#+end_src
 
-
-
-* functionality
-
-** xah stuff
-
-#+NAME: xah-cut-line-or-region
-#+begin_src emacs-lisp :tangle yes
 (defun xah-cut-line-or-region ()
   "Cut current line, or text selection.
 When `universal-argument' is called first, cut whole buffer (respects `narrow-to-region').
@@ -2525,10 +1474,7 @@ Version 2015-06-10"
     (progn (if (use-region-p)
                (kill-region (region-beginning) (region-end) t)
              (kill-region (line-beginning-position) (line-beginning-position 2))))))
-#+end_src
 
-#+NAME: xah-copy-line-or-region
-#+begin_src emacs-lisp :tangle yes
 (defun xah-copy-line-or-region ()
   "Copy current line, or text selection.
 When called repeatedly, append copy subsequent lines.
@@ -2569,10 +1515,7 @@ Version 2017-07-08"
             (end-of-line)
             (forward-char)
             (message "line copied")))))))
-#+end_src
 
-#+NAME: xah-paste-or-paste-previous
-#+begin_src emacs-lisp :tangle yes
 (defun xah-paste-or-paste-previous ()
   "Paste. When called repeatedly, paste previous.
 This command calls `yank', and if repeated, call `yank-pop'.
@@ -2592,10 +1535,7 @@ Version 2017-07-25"
       (if (eq real-last-command this-command)
           (yank-pop 1)
         (yank)))))
-#+end_src
 
-#+NAME: xah-show-kill-ring
-#+begin_src emacs-lisp :tangle yes
 (defun xah-show-kill-ring ()
   "Insert all `kill-ring' content in a new buffer.
 
@@ -2610,23 +1550,7 @@ Version 2017-06-19"
       (dolist (x kill-ring )
         (insert x "\n--------------------------------------------------\n\n"))
       (goto-char (point-min)))))
-#+end_src
 
-* applications
-** ERC
-
-According to EmacsWiki there are three types of ERC modules.
-
-1. built-in and enabled
-2. built-in and disabled
-3. external
-
-Some of the external modules are available in ELPA and others are manual.
-
-*** init
-   
- #+NAME: erc
- #+BEGIN_SRC emacs-lisp :tangle yes
 (use-package erc
   :config
   (use-package erc-sasl
@@ -2683,14 +1607,7 @@ Some of the external modules are available in ELPA and others are manual.
             )
   (add-hook 'erc-insert-post-hook 'erc-scroll-to-bottom)
   )
- #+END_SRC
 
-*** erc-login and erc-sasl
-
-    Override erc-login, enabling erc-sasl to function properly.
-
-#+NAME: erc-login
-#+BEGIN_SRC emacs-lisp :tangle yes
 ;; authentication
 
 (defun erc-login ()
@@ -2714,68 +1631,33 @@ Some of the external modules are available in ELPA and others are manual.
 	   "0" "*"
 	   erc-session-user-full-name))
   (erc-update-mode-line))
-#+END_SRC
 
-*** Netsplit
-
- Detects netsplits
-
- #+NAME:
- #+begin_src emacs-lisp  :tangle yes
 (use-package erc-netsplit
   :defer t
   :config
   (erc-netsplit-mode t)
   )
- #+end_src
 
-*** Track
-
- Track channel activity in the mode line.
-
- #+NAME:
- #+begin_src emacs-lisp  :tangle yes
 (use-package erc-track
   :defer t
   :config
   (erc-track-mode t)
   )
- #+end_src
 
-*** Ring
-
- Enables input history
-
- #+NAME:
- #+begin_src emacs-lisp :tangle yes
 (use-package erc-ring
   :defer t
   :config
   (erc-ring-enable)
   (add-to-list 'erc-modules 'ring)
   )
- #+end_src
 
-*** Services
-
- Identify to Nickserv (IRC Services) automatically
-
- #+NAME:
- #+begin_src emacs-lisp :tangle yes
 (use-package erc-services
   :defer t
   :config
   (add-to-list 'erc-modules 'services)
   (erc-services-mode 1)
   )
- #+end_src
 
-*** Autoaway
-
- Set away status automatically.
-
- #+NAME:
- #+begin_src emacs-lisp :tangle yes
 (use-package erc-autoaway
   :defer t
   :config
@@ -2785,14 +1667,7 @@ Some of the external modules are available in ELPA and others are manual.
    erc-auto-discard-away     t
    )
   )
- #+end_src
 
-*** Log
-
- Save buffers in logs
-
- #+NAME:
- #+begin_src emacs-lisp :tangle yes
 (use-package erc-log
   :defer t
   :config
@@ -2815,14 +1690,7 @@ Some of the external modules are available in ELPA and others are manual.
   (add-hook 'erc-insert-post-hook 'erc-truncate-buffer)
   (setq erc-truncate-buffer-on-save t)
   )
- #+end_src
 
-*** Join
-
- Join channels automatically.
-
- #+NAME:erc-join
- #+begin_src emacs-lisp :tangle yes
 (use-package erc-join
   :defer t
   :config
@@ -2839,23 +1707,11 @@ Some of the external modules are available in ELPA and others are manual.
      )
    )
   )
- #+end_src
 
-*** Goodies
-
- #+NAME:
- #+begin_src emacs-lisp :tangle yes
 (use-package erc-goodies
   :defer t
   )
- #+end_src
 
-*** Match
-
- Highlight pals, fools, and other keywords in all instances of these words in the channel buffers. Also: if you are using track-modified-channels-mode, channels mentioning the keywords in them will appear in a difference face in your modeline.
-
- #+NAME:
- #+begin_src emacs-lisp :tangle yes
 (use-package erc-match
   :defer t
   :config
@@ -2875,12 +1731,7 @@ Some of the external modules are available in ELPA and others are manual.
                   )
    )
   )
- #+end_src
 
-*** Images
-
- #+NAME: erc-image
- #+begin_src emacs-lisp :tangle yes
 (use-package erc-image
   :ensure t
   :defer t
@@ -2891,21 +1742,12 @@ Some of the external modules are available in ELPA and others are manual.
    erc-image-inline-rescale '32
    )
   )
- #+end_src
 
-*** Highlighted nicks
-
- #+BEGIN_SRC emacs-lisp :tangle yes
 (use-package erc-hl-nicks
   :ensure t
   :defer t
   )
- #+END_SRC
 
-*** Youtube
-
- #+NAME:
- #+begin_src emacs-lisp :tangle yes
 (use-package erc-youtube
   :ensure t
   :defer t
@@ -2916,42 +1758,24 @@ Some of the external modules are available in ELPA and others are manual.
    erc-youtube-apiv3-key "AIzaSyAv0vJqSR7LOqmlwnAYz9Wxcvae4vDCB8g"
    )
   )
- #+end_src
 
-*** Smileys
-
- #+NAME:
- #+begin_src emacs-lisp :tangle yes
 (use-package smiley
   :defer t
   :config
   (add-to-list 'erc-modules 'smiley)
   )
- #+end_src
 
-*** imenu
-
- #+NAME:
- #+begin_src emacs-lisp :tangle yes
 (use-package erc-imenu
   :defer t
   :disabled t
   )
- #+end_src
 
-*** Freenode
-
- #+NAME: irc-fn
- #+begin_src emacs-lisp :tangle yes
 (defun irc-fn ()
   "Connect to FreeNode IRC."
   (interactive)
   (erc-tls :server "irc.freenode.net"  :port 6697)
   )
- #+end_src
 
- #+NAME:
- #+begin_src emacs-lisp :tangle yes
 (defun irc-fn-windows ()
   (interactive)
   (select-frame (make-frame '((name . "Emacs Freenode IRC")
@@ -2970,45 +1794,25 @@ Some of the external modules are available in ELPA and others are manual.
   (windmove-left)
   (switch-to-buffer "#emacs")
 )
- #+end_src
 
-*** Thinstack
-
- #+NAME: irc-ts
- #+begin_src emacs-lisp :tangle yes
 (defun irc-ts ()
   "Connect to Thinstack IRC."
   (interactive)
   (erc-tls :server "irc.thinstack.net" :port 6697)
   )
- #+end_src
 
-*** Chatrealm
-
- #+NAME: irc-cr
- #+begin_src emacs-lisp :tangle yes
 (defun irc-cr ()
   "Connect to Chatrealm IRC."
   (interactive)
   (erc-tls :server "irc.chatrealm.net" :port 6697)
   )
- #+end_src
-   
-*** BitlBee
 
- #+NAME:
- #+begin_src emacs-lisp :tangle yes
 (defun irc-bb ()
   "Connect to BitlBee local IRC."
   (interactive)
   (erc :server "localhost" :port 6667 :nick "pjorgensen")
   )
- #+end_src
 
-*** Tweet
-   
-   #+NAME:
-   #+begin_src emacs-lisp :tangle yes
 (use-package erc-tweet
   :ensure t
   :defer t
@@ -3016,52 +1820,24 @@ Some of the external modules are available in ELPA and others are manual.
   (add-to-list 'erc-modules 'tweet)
   (erc-update-modules)
   )
-   #+end_src
-   
-* modes
 
-** autohotkey mode
-
-  Check out [[http://xahlee.info/mswin/emacs_autohotkey_mode.html][ahk-mode at ergoemacs.org]]. Need to remember or find how to change the "Edit This Script" menu item to emacsclientw on Windows.
-
-#+NAME: xahk-mode
-#+BEGIN_SRC emacs-lisp :tangle no
 (use-package xahk-mode
+  :ensure t
   :mode ("\\.ahk\\'" . xahk-mode)
   )
-#+END_SRC
 
-** fountain mode
-
-[[https://fountain.io/][Fountain | A markup language for screenwriting.]]
-
-In case I decide to write a screen play 😊
-
-#+NAME:
-#+begin_src emacs-lisp :tangle yes
 (use-package fountain-mode
   :ensure t
   )
-#+end_src
 
-** markdown
+(use-package markdown-mode
+  :ensure t
+  :commands (markdown-mode gfm-mode)
+  :mode (("README\\.md\\'" . gfm-mode)
+         ("\\.md\\'" . markdown-mode)
+         ("\\.markdown\\'" . markdown-mode))
+  :init (setq markdown-command "multimarkdown"))
 
-*** init
-
-#+BEGIN_SRC  emacs-lisp :tangle yes
-  (use-package markdown-mode
-    :ensure t
-    :commands (markdown-mode gfm-mode)
-    :mode (("README\\.md\\'" . gfm-mode)
-           ("\\.md\\'" . markdown-mode)
-           ("\\.markdown\\'" . markdown-mode))
-    :init (setq markdown-command "multimarkdown"))
-#+END_SRC
-  
-*** markdown-mode-hooks
-
-#+NAME:
-#+begin_src emacs-lisp :tangle yes
 (add-hook 'markdown-mode-hook
           (lambda()
             (variable-pitch-mode t)
@@ -3069,19 +1845,9 @@ In case I decide to write a screen play 😊
             (flyspell-mode       1)
             )
           )
-#+end_src
 
-
-* secrets
-
-#+NAME:
-#+begin_src emacs-lisp :tangle yes
 (load "~/.emacs.secrets.gpg" t)
-#+end_src
 
-* zz timing end
-
-#+BEGIN_SRC emacs-lisp :tangle yes
 ;;; Post initialization
 
 (when window-system
@@ -3097,15 +1863,3 @@ In case I decide to write a screen play 😊
 			  ,load-file-name elapsed)))
 	    t)
   )
-#+END_SRC
-
-* Notes & todos
-
-  + Reassign “2C” two-column mode somewhere else
-  + Clean-up default C-x & C-c mappings to other places
-    + bind cut, copy, paste (cua-mode?)
-  + Key binding priorities
-    + <menu> is main leader
-    + <f2> for window and frame management
-    + <f9> for org-mode
-
