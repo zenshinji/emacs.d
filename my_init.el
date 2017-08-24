@@ -95,23 +95,6 @@
 ;; change all prompts to y or n
 (fset 'yes-or-no-p 'y-or-n-p)
 
-(use-package auth-source
-  :defer t
-  :config
-  (setq
-   auth-sources '(
-                  ;; default
-                  ;; "secrets:session"
-                  ;; "secrets:Login"
-                  "~/.authinfo.gpg"
-                  "~/.authinfo"
-                  "~/.netrc"
-                  )
-   epa-file-cache-passphrase-for-symmetric-encryption t
-   auth-source-debug 'trivia
-   )
-  )
-
 (defun ignore-error-wrapper (fn)
   "Funtion return new function that ignore errors.
    The function wraps a function with `ignore-errors' macro."
@@ -189,6 +172,23 @@
 
 (setq use-package-verbose t)
 
+(use-package auth-source
+  :defer t
+  :config
+  (setq
+   auth-sources '(
+                  ;; default
+                  ;; "secrets:session"
+                  ;; "secrets:Login"
+                  "~/.authinfo.gpg"
+                  "~/.authinfo"
+                  "~/.netrc"
+                  )
+   epa-file-cache-passphrase-for-symmetric-encryption t
+   auth-source-debug 'trivia
+   )
+  )
+
 (use-package async
   :ensure t
   :defer t
@@ -207,6 +207,17 @@
   ("C-c p" . paradox-list-packages)
   )
 
+;; (defun ddd ()
+;;   "Enter a backslash on the MBA keyboard."
+;;   (interactive)
+;;   (insert "\\")
+;;   )
+
+(global-set-key (kbd "M-¥") '(lambda ()
+			         (interactive)
+				 (insert "\\")
+				 ))
+
 ;; on Linux, the menu/apps key syntax is <menu>
 ;; on Windows, the menu/apps key syntax is <apps>
 ;; make the syntax equal
@@ -214,7 +225,7 @@
 ;; (define-key key-translation-map (kbd "<apps>") 'event-apply-hyper-modifier)
 ;; (define-key key-translation-map (kbd "<menu>") 'event-apply-hyper-modifier)
 (define-key key-translation-map (kbd "<apps>") (kbd "<menu>"))
-(define-key key-translation-map (kbd "<fn>") (kbd "<menu>"))
+(define-key key-translation-map (kbd "<f13>") (kbd "<menu>"))
 
 (progn
   ;; define set of key sequences
@@ -247,7 +258,7 @@
   (define-key my-leader-key-map (kbd "o") 'hydra-org2blog)
   (define-key my-leader-key-map (kbd "p") 'paradox-list-packages)
   (define-key my-leader-key-map (kbd "v") 'xah-paste-or-paste-previous)
-  ;; (define-key my-leader-key-map (kbd "w") 'ace-window)
+  ;; (defaine-key my-leader-key-map (kbd "w") 'ace-window)
   (define-key my-leader-key-map (kbd "x") 'xah-cut-line-or-region)
   (define-key my-leader-key-map (kbd ";") 'comment-dwim)
   ;; (define-key my-leader-key-map (kbd "¥") ')
@@ -1819,11 +1830,6 @@ Version 2017-06-19"
   :config
   (add-to-list 'erc-modules 'tweet)
   (erc-update-modules)
-  )
-
-(use-package xahk-mode
-  :ensure t
-  :mode ("\\.ahk\\'" . xahk-mode)
   )
 
 (use-package fountain-mode

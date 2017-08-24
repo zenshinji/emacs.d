@@ -520,9 +520,7 @@ Bootstrap bind-key
 
 By default on my Japanese MacBook Air keyboard (JIS), command is super (s), option and esc are meta (M), control is control (C). fn does nothing. I leave the Japanese language keys alone. I add 
 
-
-
-Using karabiner-elements I flip control (left of a) and caps (left of left option). The new caps key sends C-M-s when combined with another key and <f18> when hit alone. The underscore key to the left of the right shift I change to provide ’\’ unshifted, ’_’ shifted in Keyboard Maestro. Emacs sees the first as “M-¥”, so the remapping of it to send a backslash.
+Using karabiner-elements I flip control (left of a) and caps (left of left option). The new caps key sends C-M-s when combined with another key and <f18> when hit alone.
 
 #+NAME: macOS keys
 #+begin_src emacs-lisp :tangle yes
@@ -533,10 +531,10 @@ Using karabiner-elements I flip control (left of a) and caps (left of left optio
 ;;   )
 
 (global-set-key (kbd "M-¥") '(lambda ()
-			       "Enter a backslash on the MBA keyboard."
 			         (interactive)
 				 (insert "\\")
 				 ))
+
 #+end_src
 
 #+NAME: F16-19 key translation maps
@@ -2544,11 +2542,6 @@ Inside a code-block, just call `self-insert-command'."
 
 * functionality
 
-#+NAME: delete selection mode
-#+begin_src emacs-lisp :tangle yes
-(delete-selection-mode 1)
-#+end_src
-
 ** xah stuff
 
 #+NAME: xah-cut-line-or-region
@@ -3067,9 +3060,8 @@ Some of the external modules are available in ELPA and others are manual.
   Check out [[http://xahlee.info/mswin/emacs_autohotkey_mode.html][ahk-mode at ergoemacs.org]]. Need to remember or find how to change the "Edit This Script" menu item to emacsclientw on Windows.
 
 #+NAME: xahk-mode
-#+BEGIN_SRC emacs-lisp :tangle yes
+#+BEGIN_SRC emacs-lisp :tangle no
 (use-package xahk-mode
-  :ensure t
   :mode ("\\.ahk\\'" . xahk-mode)
   )
 #+END_SRC
@@ -3150,5 +3142,4 @@ In case I decide to write a screen play 😊
     + <menu> is main leader
     + <f2> for window and frame management
     + <f9> for org-mode
-
 
