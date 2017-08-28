@@ -18,7 +18,7 @@
 #+KEYWORDS: literate programming, reproducible research, programming language, lisp, elisp, ide, emacs, babel, org-mode
 
 * OS
-
+  
 ** Windows 10
 
 *** TODO [[http://www.msys2.org/][MSYS2 homepage]]
@@ -93,7 +93,6 @@ I use Textexpander to keep my general use keyboard shortcuts in sync between Mac
 
 This is a test
 
-
 * Init
 
 Here are the header bits
@@ -126,7 +125,7 @@ From here, let's time how long it takes Emacs to launch so we can tweak & optimi
 
 Set up debugging, activating on keystroke but otherwise disabled
 
-#+BEGIN_SRC emacs-lisp :tangle yes
+#+BEGIN_SRC emacs-lisp :tangle no
   (setq
    debug-on-error     nil
    debug-on-signal    nil
@@ -146,7 +145,7 @@ Set the coding to UTF-8 here to make sure everything after has it set.
 Do this in as many ways as possible here to make sure it's reflected
 properly everywhere.
 
-#+BEGIN_SRC emacs-lisp :tangle yes
+#+BEGIN_SRC emacs-lisp :tangle no
 (setq
  coding-system-for-read                  'utf-8
  coding-system-for-write                 'utf-8
@@ -264,7 +263,6 @@ This basically aliases the built in “yes or no” prompt function to the built
 (fset 'yes-or-no-p 'y-or-n-p)
 #+end_src
 
-
 ** error handling
 
 #+NAME:
@@ -282,7 +280,7 @@ This basically aliases the built in “yes or no” prompt function to the built
 * package system
 
 #+NAME: prefer newer packages than their elc counterparts
-#+BEGIN_SRC emacs-lisp :tangle yes
+#+BEGIN_SRC emacs-lisp :tangle no
 (setq
  load-prefer-newer t
  )
@@ -294,9 +292,9 @@ This basically aliases the built in “yes or no” prompt function to the built
 
 (add-to-list 'package-archives '("org"          . "http://orgmode.org/elpa/") t)
 (add-to-list 'package-archives '("melpa-stable" . "http://stable.melpa.org/packages/") t)
-(add-to-list 'package-archives '("gnu"          . "http://elpa.gnu.org/packages/"))
-(add-to-list 'package-archives '("melpa"        . "http://melpa.org/packages/") t)
-(add-to-list 'package-archives '("marmalade"    . "https://marmalade-repo.org/packages/") t)
+;; (add-to-list 'package-archives '("gnu"          . "http://elpa.gnu.org/packages/"))
+;; (add-to-list 'package-archives '("melpa"        . "http://melpa.org/packages/") t)
+;; (add-to-list 'package-archives '("marmalade"    . "https://marmalade-repo.org/packages/") t)
 
 (when (boundp 'package-pinned-packages)
   (setq package-pinned-packages
@@ -310,8 +308,8 @@ This basically aliases the built in “yes or no” prompt function to the built
           )
         )
   )
-(setq package-check-signature nil)
 (package-initialize)                ;; Initialize & Install Package
+(package-refresh-contents)
 #+END_SRC
 
 #+NAME: Common LISP
@@ -339,7 +337,7 @@ add ~/.emacs.d/elisp and all subdirectories to the load path for downloaded pack
 Bootstrap `use-package'
 
 #+NAME: use-package
-#+BEGIN_SRC emacs-lisp :tangle yes
+#+BEGIN_SRC emacs-lisp :tangle no
 ;; (package-refresh-contents)
 (unless (package-installed-p 'use-package)
   (package-install 'use-package)
@@ -378,7 +376,7 @@ Bootstrap bind-key
   (require 'bind-key))
 #+END_SRC
 
-#+BEGIN_SRC emacs-lisp :tangle yes
+#+BEGIN_SRC emacs-lisp :tangle no
 (setq use-package-verbose t)
 #+END_SRC
 
@@ -403,7 +401,6 @@ Bootstrap bind-key
    )
   )
 #+end_src
-
 
 * paradox                                                :private:keybinding:
 
@@ -430,80 +427,6 @@ Bootstrap bind-key
   ("C-c p" . paradox-list-packages)
   )
 #+END_SRC
-
-* ergoemacs                                             :keybinding:disabled:
-
-#+NAME: ergoemacs-layout-jp-SP4-en
-#+begin_src emacs-lisp :tangle no
-(defvar ergoemacs-layout-jp-SP4-en
-  '("" "" "1" "2" "3" "4" "5" "6" "7" "8" "9" "0" "-" "^" "¥"
-    "" ""  "q" "w" "e" "r" "t" "y" "u" "i" "o" "p" "@" "[" ""
-    "" ""  "a" "s" "d" "f" "g" "h" "j" "k" "l" ";" ":" "]" ""
-    "" ""  "z" "x" "c" "v" "b" "n" "m" "," "." "/" "\\" "" ""
-    ;; Shifted
-    "" "" "!" "\"" "#" "$" "%" "&" "\'" "(" ")" "0" "=" "~" "|"
-    "" ""  "Q" "W" "E" "R" "T" "Y" "U" "I" "O" "P" "`" "{" ""
-    "" ""  "A" "S" "D" "F" "G" "H" "J" "K" "L" "+" "*" "}" ""
-    "" ""  "Z" "X" "C" "V" "B" "N" "M" "<" ">" "?" "_" "" "")
-  "JP English/Romaji QWERTY SP4 Keyboard")
-#+end_src
-
-#+NAME: ergoemacs-layout-jp-mba-en
-#+begin_src emacs-lisp :tangle no
-(defvar ergoemacs-layout-jp-mba-en
-  '("" "" "1" "2" "3" "4" "5" "6" "7" "8" "9" "0" "-" "^" "¥"
-    "" ""  "q" "w" "e" "r" "t" "y" "u" "i" "o" "p" "@" "[" ""
-    "" ""  "a" "s" "d" "f" "g" "h" "j" "k" "l" ";" ":" "]" ""
-    "" ""  "z" "x" "c" "v" "b" "n" "m" "," "." "/" "_" "" ""
-    ;; Shifted
-    "" "" "!" "\"" "#" "$" "%" "&" "\'" "(" ")" "0" "=" "~" "|"
-    "" ""  "Q" "W" "E" "R" "T" "Y" "U" "I" "O" "P" "`" "{" ""
-    "" ""  "A" "S" "D" "F" "G" "H" "J" "K" "L" "+" "*" "}" ""
-    "" ""  "Z" "X" "C" "V" "B" "N" "M" "<" ">" "?" "_" "" "")
-  "JP English/Romaji QWERTY MacBook Air Keyboard")
-#+end_src
-
-#+NAME: ergoemacs-mode
-#+begin_src emacs-lisp :tangle no
-  (use-package ergoemacs-mode
-    :ensure t
-    ;; :init
-    ;; (defvar ergoemacs-layout-jp-mac-en
-    ;;   '("" "" "1" "2" "3" "4" "5" "6" "7" "8" "9" "0" "-" "^" "¥"
-    ;;     "" ""  "q" "w" "e" "r" "t" "y" "u" "i" "o" "p" "@" "[" ""
-    ;;     "" ""  "a" "s" "d" "f" "g" "h" "j" "k" "l" ";" ":" "]" ""
-    ;;     "" ""  "z" "x" "c" "v" "b" "n" "m" "," "." "/" "\\" "" ""
-    ;;     ;; Shifted
-    ;;     "" "" "!" "\"" "#" "$" "%" "&" "\'" "(" ")" "0" "=" "~" "|"
-    ;;     "" ""  "Q" "W" "E" "R" "T" "Y" "U" "I" "O" "P" "`" "{" ""
-    ;;     "" ""  "A" "S" "D" "F" "G" "H" "J" "K" "L" "+" "*" "}" ""
-    ;;     "" ""  "Z" "X" "C" "V" "B" "N" "M" "<" ">" "?" "_" "" "")
-    ;;   "JP English/Romaji QWERTY Mac Keyboard")
-    :config
-    (setq
-     ergoemacs-theme                  nil  ;; Uses Standard Ergoemacs keyboard theme
-     ergoemacs-keyboard-layout        "jp-SP4-en" ;; Assumes QWERTY keyboard layout
-     ergoemacs-ctrl-c-or-ctrl-x-delay 1
-     )
-    )
-
-#+end_src
-  
-#+NAME: F16-19 key translation maps
-#+begin_src emacs-lisp :tangle no
-;; (define-key key-translation-map (kbd "A-h") 'event-apply-hyper-modifier)
-;; (define-key key-translation-map (kbd "<f19>") 'event-apply-meta-modifier)
-;; (define-key key-translation-map (kbd "<f18>") 'event-apply-control-modifier)
-;; (define-key key-translation-map (kbd "<f17>") 'event-apply-alt-modifier)
-;; (define-key key-translation-map (kbd "<f16>") 'event-apply-super-modifier)
-
-;;; f21 - f24 don't work
-;;; f13 is set for <menu>
-;;; f14 - f15 change screen brightness for some reason
-;;; f20 should work but triggers set-mark-command
-;;; <app> triggers print functions
-
-#+end_src
 
 * keyboard
 
@@ -999,6 +922,7 @@ _n_: Navigate _._: mark position _/_: jump to mark
    org-src-tab-acts-natively         t
    org-src-window-setup              'current-window
    org-CUA-compatible                t
+   org-directory "~/Dropbox/org"
    )
   (dolist
       (face '(
@@ -1082,7 +1006,6 @@ _n_: Navigate _._: mark position _/_: jump to mark
 		  
   (defun org-current-is-todo ()
     (string= "TODO" (org-get-todo-state)))
-
 #+end_src
 
 ** structure templates & other initialization
@@ -1262,14 +1185,14 @@ While we are at let us also make it possible to drag file links onto org-files, 
 (define-key org-mode-map (kbd "<M-drag-n-drop>") 'my-dnd-func)
 #+end_src
 
-** org-wunderlist                                                   :private:
+** org-wunderlist                                          :private:disabled:
 
    Wunderlist, while it exists, provides a bridge between iOS voice input for reminders and org-mode. A ifttt.com recipe emails newly created iOS/macOS reminders into Wunderlist. This package pulls the entries into an org-file. Each of the entries brought in gets refiled. I manually delete the reminders and Wunderlist entries.
 
    - [ ] TODO automate task & reminder import into org-mode and delete the originating source entry (Reminders, Wunderlist, IBM Notes/Verse, etc.)
    
 #+NAME: org-wunderlist
-#+begin_src emacs-lisp :tangle yes
+#+begin_src emacs-lisp :tangle no
 (use-package org-wunderlist
   :ensure t
   :config
@@ -1302,33 +1225,43 @@ While we are at let us also make it possible to drag file links onto org-files, 
 #+BEGIN_SRC emacs-lisp :tangle yes
 
 #+END_SRC
-** TODO org2blog
+** org2blog
 
 #+NAME: xml-rpc from githhub
 #+begin_src emacs-lisp :tangle yes
 (use-package xml-rpc
-  :load-path "elisp/"
+  :load-path "~/src/xml-rpc-el"
   )
+#+end_src
+
+#+NAME: metaweblog from github
+#+begin_src emacs-lisp :tangle yes
+(use-package metaweblog
+  :after xml-rpc
+  :load-path "~/src/metaweblog"
+)
 #+end_src
 
    [[http://lavnir.be/wp/?p%3D6][org2blog]] authentication tips
 
-#+NAME: org2blog
+#+NAME: org2blog from github
 #+begin_src emacs-lisp :tangle yes
 (use-package org2blog
-  :after xml-rpc
-  :load-path "../OneDrive/Documents/GitHub/org2blog"
+  :after metaweblog
+  :load-path "../src/org2blog"
   ;; :bind
   ;; ("C-c o p" . org2blog/wp-post-buffer-and-publish)
   ;; ("C-c o d" . org2blog/wp-post-buffer)
   ;; ("C-c o c" . org2blog/wp-complete-category)
   ;; ("C-c o n" . org2blog/wp-new-entry)
+  :init
+  (add-hook 'org-mode-hook #'org2blog/wp-org-mode-hook-fn)
+  (add-hook 'org2blog/wp-after-new-post-or-page-functions (lambda (p) (pp p)))
   :config
   (setq
    org2blog/wp-use-sourcecode-shortcode t
    org2blog/wp-confirm-post t
-   org2blog/wp-track-posts t
-   ;; org2blog/wp-buffer-format-function 'my-format-function
+   ;; org2blog/wp-track-posts '("~/Dropbox/org/web/org2blog.org" "Posts")
    org2blog/wp-blog-alist
    `(
      ("PRJ"
@@ -1337,6 +1270,7 @@ While we are at let us also make it possible to drag file links onto org-files, 
       :password ,(cadr (auth-source-user-and-password "prjorgensen.com"))
       :default-title "Hello, World!"
       :default-categories ("Uncategorized" "org2blog")
+      ;; :track-posts '("~/Dropbox/org/web/PRJ/org2blog.org" "Posts")
       )
      ("PVCSEC"
       :url "https://www.pvcsec.com/xmlrpc.php"
@@ -1344,14 +1278,10 @@ While we are at let us also make it possible to drag file links onto org-files, 
       :password ,(cadr (auth-source-user-and-password "pvcsec.com"))
       :default-title "Hello, World!"
       :default-categories ("Uncategorized" "org2blog")
+      ;; :track-posts '("~/Dropbox/org/web/PVCSEC/org2blog.org" "Posts")
       )
      )
    )
-  (defun my-format-function (format-string)
-    (format format-string
-	    org2blog/wp-default-title
-	    (format-time-string "%d-%m-%Y" (current-time)))
-    )
   )
 #+end_src
 
@@ -1772,6 +1702,16 @@ I used the keybindings M-n and M=p by analogy with C-n and C-p.
   )
 #+END_SRC
 
+** pretty-mode
+
+#+NAME: pretty-mode
+#+begin_src emacs-lisp :tangle yes
+(use-package pretty-mode
+  :ensure t
+  :config
+  (global-pretty-mode t)
+  )
+#+end_src
 
 ** dimish bufface from mode line
 
@@ -2541,7 +2481,6 @@ Inside a code-block, just call `self-insert-command'."
       (forward-char -1))))
 #+end_src
 
-
 * functionality
 
 #+NAME: delete selection mode
@@ -2654,6 +2593,37 @@ Version 2017-06-19"
       (goto-char (point-min)))))
 #+end_src
 
+#+NAME: xah-copy-file-path
+#+begin_src emacs-lisp :tangle yes
+(defun xah-copy-file-path (&optional @dir-path-only-p)
+  "Copy the current buffer's file path or dired path to `kill-ring'.
+Result is full path.
+If `universal-argument' is called first, copy only the dir path.
+
+If in dired, copy the file/dir cursor is on, or marked files.
+
+If a buffer is not file and not dired, copy value of `default-directory' (which is usually the “current” dir when that buffer was created)
+
+URL `http://ergoemacs.org/emacs/emacs_copy_file_path.html'
+Version 2017-08-25"
+  (interactive "P")
+  (let (($fpath
+         (if (equal major-mode 'dired-mode)
+             (progn
+               (mapconcat 'identity (dired-get-marked-files) "\n"))
+           (if (buffer-file-name)
+               (buffer-file-name)
+             (expand-file-name default-directory)))))
+    (kill-new
+     (if @dir-path-only-p
+         (progn
+           (message "Directory path copied: 「%s」" (file-name-directory $fpath))
+           (file-name-directory $fpath))
+       (progn
+         (message "File path copied: 「%s」" $fpath)
+         $fpath )))))
+#+end_src
+
 * applications
 ** ERC
 
@@ -2670,8 +2640,10 @@ Some of the external modules are available in ELPA and others are manual.
  #+NAME: erc
  #+BEGIN_SRC emacs-lisp :tangle yes
 (use-package erc
+  :defer
   :config
   (use-package erc-sasl
+    :after erc
     :load-path "~/.emacs.d/elisp/"
     :config
     (add-to-list 'erc-sasl-server-regexp-list ".*\\freenode.net")
@@ -2959,7 +2931,7 @@ Some of the external modules are available in ELPA and others are manual.
    )
   )
  #+end_src
-
+ 
 *** Smileys
 
  #+NAME:

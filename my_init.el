@@ -12,26 +12,6 @@
 (unless noninteractive
   (message "Loading %s..." load-file-name))
 
-(setq
- debug-on-error     nil
- debug-on-signal    nil
- debug-on-quit      nil
- )
-
-;;; http://www.youtube.com/watch?v=RvPFZL6NJNQ
-(global-set-key (kbd "C-c C-d")
-                (lambda () (interactive)
-                  (setq debug-on-error (if debug-on-error nil t))
-                  (message (format "debug-on-error : %s" debug-on-error))
-                  )
-                )
-
-(setq
- coding-system-for-read                  'utf-8
- coding-system-for-write                 'utf-8
-)
-(prefer-coding-system                    'utf-8)
-
 (setq dotfiles-dir (file-name-directory
                     (or
                      (buffer-file-name)
@@ -104,17 +84,13 @@
       (ignore-errors
         (funcall fn)))))
 
-(setq
- load-prefer-newer t
- )
-
 (require 'package)
 
 (add-to-list 'package-archives '("org"          . "http://orgmode.org/elpa/") t)
 (add-to-list 'package-archives '("melpa-stable" . "http://stable.melpa.org/packages/") t)
-(add-to-list 'package-archives '("gnu"          . "http://elpa.gnu.org/packages/"))
-(add-to-list 'package-archives '("melpa"        . "http://melpa.org/packages/") t)
-(add-to-list 'package-archives '("marmalade"    . "https://marmalade-repo.org/packages/") t)
+;; (add-to-list 'package-archives '("gnu"          . "http://elpa.gnu.org/packages/"))
+;; (add-to-list 'package-archives '("melpa"        . "http://melpa.org/packages/") t)
+;; (add-to-list 'package-archives '("marmalade"    . "https://marmalade-repo.org/packages/") t)
 
 (when (boundp 'package-pinned-packages)
   (setq package-pinned-packages
@@ -128,8 +104,8 @@
           )
         )
   )
-(setq package-check-signature nil)
 (package-initialize)                ;; Initialize & Install Package
+(package-refresh-contents)
 
 (require 'cl)
 (require 'cl-lib)
@@ -144,13 +120,6 @@
 (unless package-archive-contents    ;; Refresh the packages descriptions
   (package-refresh-contents))
 (setq package-load-list '(all))     ;; List of packages to load
-
-;; (package-refresh-contents)
-(unless (package-installed-p 'use-package)
-  (package-install 'use-package)
-  )
-(eval-when-compile
-  (require 'use-package))
 
 (setq
  use-package-verbose t
@@ -169,8 +138,6 @@
   )
 (eval-when-compile
   (require 'bind-key))
-
-(setq use-package-verbose t)
 
 (use-package auth-source
   :defer t
@@ -214,6 +181,7 @@
 ;;   )
 
 (global-set-key (kbd "M-¥") '(lambda ()
+			       "Enter a backslash on the MBA keyboard."
 			         (interactive)
 				 (insert "\\")
 				 ))
@@ -386,6 +354,7 @@
    org-src-tab-acts-natively         t
    org-src-window-setup              'current-window
    org-CUA-compatible                t
+   org-directory "~/Dropbox/org"
    )
   (dolist
       (face '(
@@ -604,14 +573,6 @@ Use a prefix arg to get regular RET. "
 (define-key org-mode-map (kbd "<C-drag-n-drop>") 'my-dnd-func)
 (define-key org-mode-map (kbd "<M-drag-n-drop>") 'my-dnd-func)
 
-(use-package org-wunderlist
-  :ensure t
-  :config
-  (setq
-      org-wunderlist-file  "~/gtd/wunderlist.org"
-      org-wunderlist-dir "~/gtd/org-wunderlist/")
-  )
-
 
 
 
@@ -621,23 +582,30 @@ Use a prefix arg to get regular RET. "
 
 
 (use-package xml-rpc
-  :load-path "elisp/"
+  :load-path "~/src/xml-rpc-el"
   )
 
-(use-package org2blog
+(use-package metaweblog
   :after xml-rpc
-  :load-path "../OneDrive/Documents/GitHub/org2blog"
+  :load-path "~/src/metaweblog"
+)
+
+(use-package org2blog
+  :after metaweblog
+  :load-path "../src/org2blog"
   ;; :bind
   ;; ("C-c o p" . org2blog/wp-post-buffer-and-publish)
   ;; ("C-c o d" . org2blog/wp-post-buffer)
   ;; ("C-c o c" . org2blog/wp-complete-category)
   ;; ("C-c o n" . org2blog/wp-new-entry)
+  :init
+  (add-hook 'org-mode-hook #'org2blog/wp-org-mode-hook-fn)
+  (add-hook 'org2blog/wp-after-new-post-or-page-functions (lambda (p) (pp p)))
   :config
   (setq
    org2blog/wp-use-sourcecode-shortcode t
    org2blog/wp-confirm-post t
-   org2blog/wp-track-posts t
-   ;; org2blog/wp-buffer-format-function 'my-format-function
+   ;; org2blog/wp-track-posts '("~/Dropbox/org/web/org2blog.org" "Posts")
    org2blog/wp-blog-alist
    `(
      ("PRJ"
@@ -646,6 +614,7 @@ Use a prefix arg to get regular RET. "
       :password ,(cadr (auth-source-user-and-password "prjorgensen.com"))
       :default-title "Hello, World!"
       :default-categories ("Uncategorized" "org2blog")
+      ;; :track-posts '("~/Dropbox/org/web/PRJ/org2blog.org" "Posts")
       )
      ("PVCSEC"
       :url "https://www.pvcsec.com/xmlrpc.php"
@@ -653,14 +622,10 @@ Use a prefix arg to get regular RET. "
       :password ,(cadr (auth-source-user-and-password "pvcsec.com"))
       :default-title "Hello, World!"
       :default-categories ("Uncategorized" "org2blog")
+      ;; :track-posts '("~/Dropbox/org/web/PVCSEC/org2blog.org" "Posts")
       )
      )
    )
-  (defun my-format-function (format-string)
-    (format format-string
-	    org2blog/wp-default-title
-	    (format-time-string "%d-%m-%Y" (current-time)))
-    )
   )
 
 (use-package htmlize
@@ -890,6 +855,12 @@ Use a prefix arg to get regular RET. "
   ;; )
   )
 ;; rainbow-mode:1 ends here
+
+(use-package pretty-mode
+  :ensure t
+  :config
+  (global-pretty-mode t)
+  )
 
 ;; Remove BufFace from mode line
 (eval-after-load "face-remap"
@@ -1471,6 +1442,8 @@ Inside a code-block, just call `self-insert-command'."
       (insert "“”")
       (forward-char -1))))
 
+(delete-selection-mode 1)
+
 (defun xah-cut-line-or-region ()
   "Cut current line, or text selection.
 When `universal-argument' is called first, cut whole buffer (respects `narrow-to-region').
@@ -1562,9 +1535,39 @@ Version 2017-06-19"
         (insert x "\n--------------------------------------------------\n\n"))
       (goto-char (point-min)))))
 
+(defun xah-copy-file-path (&optional @dir-path-only-p)
+  "Copy the current buffer's file path or dired path to `kill-ring'.
+Result is full path.
+If `universal-argument' is called first, copy only the dir path.
+
+If in dired, copy the file/dir cursor is on, or marked files.
+
+If a buffer is not file and not dired, copy value of `default-directory' (which is usually the “current” dir when that buffer was created)
+
+URL `http://ergoemacs.org/emacs/emacs_copy_file_path.html'
+Version 2017-08-25"
+  (interactive "P")
+  (let (($fpath
+         (if (equal major-mode 'dired-mode)
+             (progn
+               (mapconcat 'identity (dired-get-marked-files) "\n"))
+           (if (buffer-file-name)
+               (buffer-file-name)
+             (expand-file-name default-directory)))))
+    (kill-new
+     (if @dir-path-only-p
+         (progn
+           (message "Directory path copied: 「%s」" (file-name-directory $fpath))
+           (file-name-directory $fpath))
+       (progn
+         (message "File path copied: 「%s」" $fpath)
+         $fpath )))))
+
 (use-package erc
+  :defer
   :config
   (use-package erc-sasl
+    :after erc
     :load-path "~/.emacs.d/elisp/"
     :config
     (add-to-list 'erc-sasl-server-regexp-list ".*\\freenode.net")
@@ -1830,6 +1833,11 @@ Version 2017-06-19"
   :config
   (add-to-list 'erc-modules 'tweet)
   (erc-update-modules)
+  )
+
+(use-package xahk-mode
+  :ensure t
+  :mode ("\\.ahk\\'" . xahk-mode)
   )
 
 (use-package fountain-mode
